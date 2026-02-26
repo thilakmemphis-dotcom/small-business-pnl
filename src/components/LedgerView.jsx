@@ -1,12 +1,30 @@
 import { useState, useMemo, useEffect } from 'react'
-import {
-  getAccounts,
-  addAccount,
-  getEntriesWithBalance,
-  deleteEntry,
-  getSummaryForPeriod,
-} from '../storage'
+import { useLedger } from '../context/LedgerContext'
+import { getSummaryForPeriod } from '../storage'
 import { getAccountLabel, getAccountKeyFromLabel } from '../i18n'
+
+const ACCOUNT_ICONS = {
+  Eggs: '🥚', Vegetables: '🥬', Rice: '🍚', Oil: '🫒', Milk: '🥛',
+  Flour: '🍞', Sugar: '🍬', Tea: '🍵', Salt: '🧂', Spices: '🌶️',
+  Groceries: '🛒', Fruits: '🍎', Meat: '🥩', Fish: '🐟', Snacks: '🍿',
+  Cash: '💵', Sales: '💰', Rent: '🏠', Other: '📦',
+}
+function getAccountIcon(key) {
+  return ACCOUNT_ICONS[key] || '📋'
+}
+
+function getEntriesWithBalance(entries, account) {
+  const filtered = entries.filter(e => e.account?.toLowerCase() === account?.toLowerCase())
+  const sorted = filtered.sort((a, b) => {
+    const d = a.date.localeCompare(b.date)
+    return d || (a.id > b.id ? 1 : -1)
+  })
+  let balance = 0
+  return sorted.map(e => {
+    balance += (e.credit || 0) - (e.debit || 0)
+    return { ...e, balance }
+  })
+}
 
 function formatNum(n) {
   return Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -23,6 +41,7 @@ function formatDate(dateStr, t) {
 }
 
 export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, lang, accountToSelect, onAccountSelected }) {
+  const { accounts, entries: allEntries, addAccount, deleteEntry } = useLedger()
   const [selectedAccount, setSelectedAccount] = useState('')
   const [filterOpen, setFilterOpen] = useState(null) // 'date' | 'particulars' | 'debit' | 'credit' | 'balance'
   const [filters, setFilters] = useState({ date: new Set(), particulars: new Set(), debit: new Set(), credit: new Set(), balance: new Set() })
@@ -34,11 +53,10 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
     }
   }, [accountToSelect, onAccountSelected])
 
-  const accounts = getAccounts()
   const entries = useMemo(() => {
     if (!selectedAccount) return []
-    return getEntriesWithBalance(selectedAccount)
-  }, [selectedAccount, refreshTrigger])
+    return getEntriesWithBalance(allEntries, selectedAccount)
+  }, [selectedAccount, allEntries, refreshTrigger])
 
   const summary = useMemo(() => getSummaryForPeriod(entries), [entries])
 
@@ -197,57 +215,64 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
 
   return (
     <section className="ledger-view">
-      <div style={{ marginBottom: 16 }}>
-        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--gray-600)', marginBottom: 6 }}>
-          {t.account}
-        </label>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input
-            list="account-list"
-            value={getAccountLabel(selectedAccount, lang)}
-            onChange={(e) => {
-              const val = e.target.value
-              const key = getAccountKeyFromLabel(val, lang) || val.trim()
-              setSelectedAccount(key)
-            }}
-            onBlur={(e) => {
-              const v = (e.target.value || '').trim()
-              const key = getAccountKeyFromLabel(v, lang) || v
-              if (key && !accounts.some(a => a.toLowerCase() === key.toLowerCase())) {
-                addAccount(key)
-                onRefresh?.()
-              }
-            }}
-            placeholder={t.selectAccount}
-            title={t.selectAccount}
-            style={{ flex: 1 }}
-          />
+      {/* Visual tap grid - no typing needed */}
+      <div style={{ marginBottom: 20 }}>
+        <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--slate-700)', marginBottom: 12 }}>
+          {lang === 'ta' ? 'எதை பார்க்கணும்? தட்டுங்க' : 'Tap what you want to see'}
+        </p>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: 10,
+          }}
+        >
+          {accounts.map((acc) => (
+            <button
+              key={acc}
+              type="button"
+              onClick={() => setSelectedAccount(acc)}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 6,
+                padding: '14px 8px',
+                borderRadius: 'var(--radius-md)',
+                background: selectedAccount === acc ? '#2563eb' : 'var(--white)',
+                color: selectedAccount === acc ? 'var(--white)' : 'var(--slate-800)',
+                border: selectedAccount === acc ? 'none' : '1px solid var(--gray-200)',
+                boxShadow: selectedAccount === acc ? '0 2px 8px rgba(37,99,235,0.3)' : 'var(--shadow-sm)',
+              }}
+            >
+              <span style={{ fontSize: '1.75rem' }}>{getAccountIcon(acc)}</span>
+              <span style={{ fontSize: '0.7rem', fontWeight: 600, lineHeight: 1.2, textAlign: 'center' }}>
+                {getAccountLabel(acc, lang)}
+              </span>
+            </button>
+          ))}
           <button
             type="button"
             onClick={addNewItem}
             title={t.addItemHint}
             style={{
-              minWidth: 44,
-              minHeight: 44,
-              borderRadius: 8,
-              background: 'var(--teal-600)',
-              color: 'var(--white)',
-              fontWeight: 700,
-              fontSize: '1.25rem',
-              flexShrink: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4,
+              padding: 14,
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--gray-100)',
+              border: '2px dashed var(--gray-300)',
             }}
           >
-            +
+            <span style={{ fontSize: '1.5rem' }}>➕</span>
+            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+              {lang === 'ta' ? 'புதியது' : 'New'}
+            </span>
           </button>
         </div>
-        <datalist id="account-list">
-          {accounts.map(a => (
-            <option key={a} value={a}>{getAccountLabel(a, lang)}</option>
-          ))}
-        </datalist>
-        <p style={{ fontSize: '0.8rem', color: 'var(--gray-600)', marginTop: 4 }}>
-          {selectedAccount ? t.selectAccount : (lang === 'ta' ? 'கணக்கு தேர்ந்தெடு, அல்லது கீழே பதிவு சேர்' : 'Select account above to view table, or add entry below')}
-        </p>
       </div>
 
       {selectedAccount && (
@@ -256,27 +281,72 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'left', padding: '10px 8px', background: 'var(--gray-200)', fontWeight: 600 }}>
+                  <th
+                    style={{
+                      textAlign: 'left',
+                      padding: '12px 10px',
+                      background: 'var(--slate-100)',
+                      fontWeight: 600,
+                      fontSize: '0.8125rem',
+                      color: 'var(--slate-700)',
+                    }}
+                  >
                     {t.date}
                     <FilterDropdown col="date" />
                   </th>
-                  <th style={{ textAlign: 'left', padding: '10px 8px', background: 'var(--gray-200)', fontWeight: 600 }}>
+                  <th
+                    style={{
+                      textAlign: 'left',
+                      padding: '12px 10px',
+                      background: 'var(--slate-100)',
+                      fontWeight: 600,
+                      fontSize: '0.8125rem',
+                      color: 'var(--slate-700)',
+                    }}
+                  >
                     {t.particulars}
                     <FilterDropdown col="particulars" />
                   </th>
-                  <th style={{ textAlign: 'right', padding: '10px 8px', background: 'var(--gray-200)', fontWeight: 600 }}>
+                  <th
+                    style={{
+                      textAlign: 'right',
+                      padding: '12px 10px',
+                      background: 'var(--slate-100)',
+                      fontWeight: 600,
+                      fontSize: '0.8125rem',
+                      color: 'var(--slate-700)',
+                    }}
+                  >
                     {t.debit}
                     <FilterDropdown col="debit" />
                   </th>
-                  <th style={{ textAlign: 'right', padding: '10px 8px', background: 'var(--gray-200)', fontWeight: 600 }}>
+                  <th
+                    style={{
+                      textAlign: 'right',
+                      padding: '12px 10px',
+                      background: 'var(--slate-100)',
+                      fontWeight: 600,
+                      fontSize: '0.8125rem',
+                      color: 'var(--slate-700)',
+                    }}
+                  >
                     {t.credit}
                     <FilterDropdown col="credit" />
                   </th>
-                  <th style={{ textAlign: 'right', padding: '10px 8px', background: 'var(--gray-200)', fontWeight: 600 }}>
+                  <th
+                    style={{
+                      textAlign: 'right',
+                      padding: '12px 10px',
+                      background: 'var(--slate-100)',
+                      fontWeight: 600,
+                      fontSize: '0.8125rem',
+                      color: 'var(--slate-700)',
+                    }}
+                  >
                     {t.balance}
                     <FilterDropdown col="balance" />
                   </th>
-                  <th style={{ width: 44, padding: '10px 4px', background: 'var(--gray-200)' }} />
+                  <th style={{ width: 44, padding: '12px 4px', background: 'var(--slate-100)' }} />
                 </tr>
               </thead>
               <tbody>
@@ -343,12 +413,13 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr 1fr',
-              gap: 12,
-              padding: 16,
+              gap: 16,
+              padding: 20,
               background: 'var(--white)',
-              borderRadius: 12,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-              marginBottom: 16,
+              borderRadius: 'var(--radius-md)',
+              boxShadow: 'var(--shadow-sm)',
+              border: '1px solid var(--gray-200)',
+              marginBottom: 20,
             }}
           >
             <div>
@@ -373,12 +444,11 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
         style={{
           width: '100%',
           minHeight: 52,
-          background: 'linear-gradient(135deg, var(--teal-600) 0%, var(--green-600) 100%)',
+          background: 'var(--slate-900)',
           color: 'var(--white)',
-          borderRadius: 12,
-          fontWeight: 700,
-          fontSize: '1rem',
-          boxShadow: '0 4px 12px rgba(15, 118, 110, 0.3)',
+          borderRadius: 'var(--radius-md)',
+          fontWeight: 600,
+          fontSize: '0.9375rem',
         }}
       >
         + {t.addEntry}

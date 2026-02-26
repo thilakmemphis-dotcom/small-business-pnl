@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
+import { useLedger } from '../context/LedgerContext'
 import {
-  getEntriesByDateRange,
   getSummaryForPeriod,
   getWeekBounds,
   getMonthBounds,
@@ -22,6 +22,7 @@ function formatDate(dateStr) {
 }
 
 export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
+  const { entries: allEntries } = useLedger()
   const today = new Date().toISOString().slice(0, 10)
   const [period, setPeriod] = useState('weekly') // 'weekly' | 'monthly'
   const [weekDate, setWeekDate] = useState(today)
@@ -33,8 +34,10 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
   }, [period, weekDate, monthDate])
 
   const entries = useMemo(() => {
-    return getEntriesByDateRange(bounds.start, bounds.end).sort((a, b) => a.date.localeCompare(b.date))
-  }, [bounds, refreshTrigger])
+    return allEntries
+      .filter(e => e.date >= bounds.start && e.date <= bounds.end)
+      .sort((a, b) => a.date.localeCompare(b.date))
+  }, [allEntries, bounds, refreshTrigger])
 
   const summary = useMemo(() => getSummaryForPeriod(entries), [entries])
 
@@ -80,11 +83,13 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
       <div
         style={{
           display: 'flex',
-          gap: 8,
-          marginBottom: 16,
+          gap: 6,
+          marginBottom: 20,
           padding: 4,
-          background: 'var(--gray-200)',
-          borderRadius: 10,
+          background: 'var(--white)',
+          borderRadius: 'var(--radius-md)',
+          boxShadow: 'var(--shadow-sm)',
+          border: '1px solid var(--gray-200)',
         }}
       >
         <button
@@ -93,12 +98,12 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
           data-active={period === 'weekly'}
           style={{
             flex: 1,
-            padding: '12px 16px',
-            borderRadius: 8,
+            padding: '14px 16px',
+            borderRadius: 10,
             fontWeight: 600,
-            transition: 'all 0.2s',
-            background: period === 'weekly' ? 'var(--white)' : 'transparent',
-            boxShadow: period === 'weekly' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+            fontSize: '0.9375rem',
+            background: period === 'weekly' ? 'var(--slate-900)' : 'transparent',
+            color: period === 'weekly' ? 'var(--white)' : 'var(--text-secondary)',
           }}
         >
           {t.weekly}
@@ -109,12 +114,12 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
           data-active={period === 'monthly'}
           style={{
             flex: 1,
-            padding: '12px 16px',
-            borderRadius: 8,
+            padding: '14px 16px',
+            borderRadius: 10,
             fontWeight: 600,
-            transition: 'all 0.2s',
-            background: period === 'monthly' ? 'var(--white)' : 'transparent',
-            boxShadow: period === 'monthly' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+            fontSize: '0.9375rem',
+            background: period === 'monthly' ? 'var(--slate-900)' : 'transparent',
+            color: period === 'monthly' ? 'var(--white)' : 'var(--text-secondary)',
           }}
         >
           {t.monthly}
@@ -127,11 +132,12 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 12,
-          marginBottom: 16,
-          padding: '12px 16px',
+          marginBottom: 20,
+          padding: '14px 20px',
           background: 'var(--white)',
-          borderRadius: 12,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+          borderRadius: 'var(--radius-md)',
+          boxShadow: 'var(--shadow-sm)',
+          border: '1px solid var(--gray-200)',
         }}
       >
         <button
@@ -140,15 +146,16 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
           style={{
             minWidth: 44,
             minHeight: 44,
-            borderRadius: 8,
+            borderRadius: 'var(--radius-sm)',
             fontSize: '1.25rem',
-            fontWeight: 700,
-            background: 'var(--gray-200)',
+            fontWeight: 600,
+            background: 'var(--gray-100)',
+            color: 'var(--slate-700)',
           }}
         >
           ‹
         </button>
-        <span style={{ fontWeight: 700, fontSize: '1rem', flex: 1, textAlign: 'center' }}>
+        <span style={{ fontWeight: 600, fontSize: '0.9375rem', flex: 1, textAlign: 'center', color: 'var(--slate-900)' }}>
           {periodLabel}
         </span>
         <button
@@ -157,10 +164,11 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
           style={{
             minWidth: 44,
             minHeight: 44,
-            borderRadius: 8,
+            borderRadius: 'var(--radius-sm)',
             fontSize: '1.25rem',
-            fontWeight: 700,
-            background: 'var(--gray-200)',
+            fontWeight: 600,
+            background: 'var(--gray-100)',
+            color: 'var(--slate-700)',
           }}
         >
           ›
@@ -171,13 +179,12 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
         style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr 1fr',
-          gap: 12,
-          padding: 16,
-          background: 'linear-gradient(135deg, #0f766e 0%, #059669 50%, #0d9488 100%)',
-          borderRadius: 12,
+          gap: 16,
+          padding: 20,
+          background: 'var(--slate-900)',
+          borderRadius: 'var(--radius-md)',
           color: 'var(--white)',
-          marginBottom: 20,
-          boxShadow: '0 4px 16px rgba(15, 118, 110, 0.3)',
+          marginBottom: 24,
         }}
       >
         <div>
@@ -194,11 +201,20 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
         </div>
       </div>
 
-      <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 12, color: 'var(--gray-800)' }}>
+      <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, marginBottom: 14, color: 'var(--slate-900)' }}>
         {period === 'weekly' ? t.weeklyReport : t.monthlyReport}
       </h3>
       {entriesByDate.length === 0 ? (
-        <p style={{ color: 'var(--gray-600)', padding: 24, textAlign: 'center', background: 'var(--white)', borderRadius: 12 }}>
+        <p
+          style={{
+            color: 'var(--text-secondary)',
+            padding: 32,
+            textAlign: 'center',
+            background: 'var(--white)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--gray-200)',
+          }}
+        >
           {t.noEntries}
         </p>
       ) : (
@@ -208,17 +224,19 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
               key={date}
               style={{
                 background: 'var(--white)',
-                borderRadius: 12,
+                borderRadius: 'var(--radius-md)',
                 overflow: 'hidden',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                boxShadow: 'var(--shadow-sm)',
+                border: '1px solid var(--gray-200)',
               }}
             >
               <div
                 style={{
-                  padding: '10px 16px',
-                  background: 'var(--gray-200)',
-                  fontWeight: 700,
-                  fontSize: '0.9rem',
+                  padding: '12px 16px',
+                  background: 'var(--slate-100)',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  color: 'var(--slate-700)',
                 }}
               >
                 {formatDate(date)}

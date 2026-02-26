@@ -5,7 +5,7 @@ const DEFAULT_ACCOUNTS = [
   'Groceries', 'Fruits', 'Meat', 'Fish', 'Snacks', 'Cash', 'Sales', 'Rent', 'Other'
 ]
 
-function getStored() {
+export function getStored() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
@@ -68,8 +68,7 @@ export function getEntries(account = null) {
   return entries.filter(e => e.account.toLowerCase() === account.toLowerCase())
 }
 
-export function addEntry(entry) {
-  const data = getStored()
+export function computeEntry(entry) {
   const qty = entry.qty != null && entry.qty !== '' ? Number(entry.qty) : null
   const unitsPerTray = (entry.unitsPerTray != null && entry.unitsPerTray !== '') ? Number(entry.unitsPerTray) : 1
   const price = entry.price != null && entry.price !== '' ? Number(entry.price) : null
@@ -81,13 +80,8 @@ export function addEntry(entry) {
   const debit = isCredit ? null : amt
   const credit = isCredit ? amt : null
 
-  // Ensure account exists
   const account = (entry.account || '').trim() || 'Other'
-  if (!data.accounts.some(a => a.toLowerCase() === account.toLowerCase())) {
-    data.accounts.push(account)
-  }
-
-  const newEntry = {
+  return {
     id: id(),
     account,
     date: entry.date || new Date().toISOString().slice(0, 10),
@@ -98,6 +92,15 @@ export function addEntry(entry) {
     debit,
     credit,
   }
+}
+
+export function addEntry(entry) {
+  const data = getStored()
+  const account = (entry.account || '').trim() || 'Other'
+  if (!data.accounts.some(a => a.toLowerCase() === account.toLowerCase())) {
+    data.accounts.push(account)
+  }
+  const newEntry = computeEntry(entry)
   data.entries.push(newEntry)
   saveStored(data)
   return newEntry

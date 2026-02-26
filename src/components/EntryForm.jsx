@@ -2,6 +2,16 @@ import { useState } from 'react'
 import { getAccounts, addAccount } from '../storage'
 import { getAccountLabel, getAccountKeyFromLabel } from '../i18n'
 
+const ACCOUNT_ICONS = {
+  Eggs: '🥚', Vegetables: '🥬', Rice: '🍚', Oil: '🫒', Milk: '🥛',
+  Flour: '🍞', Sugar: '🍬', Tea: '🍵', Salt: '🧂', Spices: '🌶️',
+  Groceries: '🛒', Fruits: '🍎', Meat: '🥩', Fish: '🐟', Snacks: '🍿',
+  Cash: '💵', Sales: '💰', Rent: '🏠', Other: '📦',
+}
+function getAccountIcon(key) {
+  return ACCOUNT_ICONS[key] || '📋'
+}
+
 function formatNum(n) {
   return Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
@@ -13,13 +23,21 @@ function formatPrice(n) {
 
 function Field({ label, hint, title, children }) {
   return (
-    <div style={{ marginBottom: 16 }}>
-      <label style={{ display: 'block', fontWeight: 600, marginBottom: 6, fontSize: '0.9rem' }}>
+    <div style={{ marginBottom: 20 }}>
+      <label
+        style={{
+          display: 'block',
+          fontWeight: 600,
+          marginBottom: 8,
+          fontSize: '0.875rem',
+          color: 'var(--slate-700)',
+        }}
+      >
         {label}
       </label>
       {children}
       {hint && (
-        <p style={{ fontSize: '0.8rem', color: 'var(--gray-600)', marginTop: 4 }}>{hint}</p>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 6 }}>{hint}</p>
       )}
     </div>
   )
@@ -32,7 +50,7 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
   const [particulars, setParticulars] = useState('')
   const [qty, setQty] = useState('')
   const [price, setPrice] = useState('')
-  const [unitsPerQty, setUnitsPerQty] = useState('30')
+  const [unitsPerQty, setUnitsPerQty] = useState('')
   const [amount, setAmount] = useState('')
   const [type, setType] = useState('debit')
 
@@ -80,7 +98,8 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.5)',
+        background: 'rgba(15, 23, 42, 0.4)',
+        backdropFilter: 'blur(4px)',
         display: 'flex',
         alignItems: 'flex-end',
         justifyContent: 'center',
@@ -93,62 +112,89 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
       <div
         style={{
           background: 'var(--white)',
-          borderRadius: '16px 16px 0 0',
+          borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
           width: '100%',
           maxWidth: 480,
           maxHeight: '90vh',
           overflowY: 'auto',
-          padding: 24,
-          boxShadow: '0 -8px 32px rgba(0,0,0,0.2)',
+          padding: 28,
+          boxShadow: 'var(--shadow-xl)',
+          border: '1px solid var(--gray-200)',
           position: 'relative',
           zIndex: 1,
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id="form-title" style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: 16 }}>
+        <h2
+          id="form-title"
+          style={{
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            marginBottom: 8,
+            color: 'var(--slate-900)',
+          }}
+        >
           {t.addEntry}
         </h2>
-        <p style={{ fontSize: '0.85rem', color: 'var(--gray-600)', marginBottom: 20 }}>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: 24 }}>
           {t.formIntro}
         </p>
         <form onSubmit={handleSubmit}>
-          <Field label={t.account} hint={t.accountFormHint} title={t.accountFormHint}>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input
-                list="form-account-list"
-                value={getAccountLabel(account, lang)}
-                onChange={(e) => {
-                  const val = e.target.value
-                  const key = getAccountKeyFromLabel(val, lang) || val.trim()
-                  setAccount(key)
-                }}
-                placeholder={lang === 'ta' ? 'எ.கா. முட்டை, அரிசி' : 'e.g. Eggs, Rice'}
-                title={t.accountFormHint}
-                style={{ flex: 1 }}
-              />
+          <Field
+            label={lang === 'ta' ? 'எதுக்கு? (தட்டுங்க)' : 'For what? (Tap to select)'}
+            hint={t.accountFormHint}
+            title={t.accountFormHint}
+          >
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: 8,
+              }}
+            >
+              {accounts.map((a) => (
+                <button
+                  key={a}
+                  data-testid={`account-${a}`}
+                  type="button"
+                  onClick={() => setAccount(a)}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 4,
+                    padding: '10px 6px',
+                    borderRadius: 'var(--radius-sm)',
+                    background: account === a ? '#2563eb' : 'var(--gray-100)',
+                    color: account === a ? 'var(--white)' : 'var(--slate-800)',
+                    border: account === a ? 'none' : '1px solid var(--gray-200)',
+                  }}
+                >
+                  <span style={{ fontSize: '1.25rem' }}>{getAccountIcon(a)}</span>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 600 }}>{getAccountLabel(a, lang)}</span>
+                </button>
+              ))}
               <button
                 type="button"
                 onClick={handleAddItem}
                 title={t.addItemHint}
                 style={{
-                  minWidth: 44,
-                  minHeight: 44,
-                  borderRadius: 8,
-                  background: 'var(--teal-600)',
-                  color: 'var(--white)',
-                  fontWeight: 700,
-                  fontSize: '1.25rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 2,
+                  padding: 10,
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'var(--white)',
+                  border: '2px dashed var(--gray-300)',
                 }}
               >
-                +
+                <span style={{ fontSize: '1.1rem' }}>➕</span>
+                <span style={{ fontSize: '0.6rem', fontWeight: 600 }}>{lang === 'ta' ? 'புதியது' : 'New'}</span>
               </button>
             </div>
           </Field>
-          <datalist id="form-account-list">
-            {accounts.map(a => (
-              <option key={a} value={a}>{getAccountLabel(a, lang)}</option>
-            ))}
-          </datalist>
 
           <Field label={t.date} hint={t.dateHint} title={t.dateHint}>
             <input
@@ -164,7 +210,6 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
               type="text"
               value={particulars}
               onChange={(e) => setParticulars(e.target.value)}
-              placeholder={t.placeholderParticulars}
               title={t.particularsHint}
               autoComplete="off"
             />
@@ -174,10 +219,11 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
             <div
               style={{
                 display: 'flex',
-                gap: 8,
+                gap: 6,
                 padding: 4,
-                background: 'var(--gray-200)',
-                borderRadius: 10,
+                background: 'var(--gray-100)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--gray-200)',
               }}
             >
               <button
@@ -186,11 +232,13 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
                 style={{
                   flex: 1,
                   padding: '12px 16px',
-                  borderRadius: 8,
+                  borderRadius: 10,
                   fontWeight: 600,
-                  transition: 'all 0.2s',
+                  fontSize: '0.875rem',
                   background: type === 'debit' ? 'var(--white)' : 'transparent',
-                  boxShadow: type === 'debit' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+                  color: type === 'debit' ? 'var(--slate-900)' : 'var(--text-secondary)',
+                  boxShadow: type === 'debit' ? 'var(--shadow-sm)' : 'none',
+                  border: type === 'debit' ? '1px solid var(--gray-200)' : '1px solid transparent',
                 }}
               >
                 {t.debitType}
@@ -201,11 +249,13 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
                 style={{
                   flex: 1,
                   padding: '12px 16px',
-                  borderRadius: 8,
+                  borderRadius: 10,
                   fontWeight: 600,
-                  transition: 'all 0.2s',
+                  fontSize: '0.875rem',
                   background: type === 'credit' ? 'var(--white)' : 'transparent',
-                  boxShadow: type === 'credit' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+                  color: type === 'credit' ? 'var(--slate-900)' : 'var(--text-secondary)',
+                  boxShadow: type === 'credit' ? 'var(--shadow-sm)' : 'none',
+                  border: type === 'credit' ? '1px solid var(--gray-200)' : '1px solid transparent',
                 }}
               >
                 {t.creditType}
@@ -220,7 +270,6 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
                 inputMode="decimal"
                 value={qty}
                 onChange={(e) => setQty(e.target.value.replace(/[^\d.]/g, ''))}
-                placeholder="e.g. 200"
                 title={t.qtyHintForm}
                 autoComplete="off"
               />
@@ -231,7 +280,6 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
                 inputMode="decimal"
                 value={unitsPerQty}
                 onChange={(e) => setUnitsPerQty(e.target.value.replace(/[^\d.]/g, ''))}
-                placeholder="30"
                 title={t.unitsPerQtyHint}
                 autoComplete="off"
               />
@@ -243,7 +291,6 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
               inputMode="decimal"
               value={price}
               onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ''))}
-                placeholder="e.g. 5.25"
               title={t.priceHint}
               autoComplete="off"
             />
@@ -255,42 +302,44 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
           )}
           <Field label={t.amount} hint={t.amountHint} title={t.amountHint}>
             <input
+              data-testid="entry-amount"
               type="text"
               inputMode="decimal"
               value={amount}
               onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ''))}
-              placeholder={t.placeholderAmount}
               title={t.amountHint}
               disabled={computedAmount != null}
             />
           </Field>
 
-          <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+          <div style={{ display: 'flex', gap: 12, marginTop: 28 }}>
             <button
               type="button"
               onClick={onClose}
               style={{
                 flex: 1,
                 minHeight: 48,
-                background: 'var(--gray-200)',
-                borderRadius: 12,
+                background: 'var(--white)',
+                borderRadius: 'var(--radius-md)',
                 fontWeight: 600,
+                fontSize: '0.9375rem',
+                border: '1px solid var(--gray-200)',
+                color: 'var(--text-secondary)',
               }}
             >
               {t.cancel}
             </button>
             <button
+              data-testid="entry-save"
               type="submit"
               style={{
                 flex: 1,
                 minHeight: 48,
-                background: type === 'credit'
-                  ? 'linear-gradient(135deg, var(--green-600) 0%, #15803d 100%)'
-                  : 'linear-gradient(135deg, var(--red-600) 0%, #b91c1c 100%)',
+                background: type === 'credit' ? 'var(--green-600)' : 'var(--red-600)',
                 color: 'var(--white)',
-                borderRadius: 12,
-                fontWeight: 700,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                borderRadius: 'var(--radius-md)',
+                fontWeight: 600,
+                fontSize: '0.9375rem',
               }}
             >
               {t.post}
