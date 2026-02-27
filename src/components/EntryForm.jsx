@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { getAccounts, addAccount } from '../storage'
-import { getAccountLabel, getAccountKeyFromLabel } from '../i18n'
+import { getAccountLabel } from '../i18n'
 
 const ACCOUNT_ICONS = {
   Eggs: '🥚', Vegetables: '🥬', Rice: '🍚', Oil: '🫒', Milk: '🥛',
@@ -53,6 +53,7 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
   const [unitsPerQty, setUnitsPerQty] = useState('')
   const [amount, setAmount] = useState('')
   const [type, setType] = useState('debit')
+  const [showMore, setShowMore] = useState(false)
 
   const accounts = getAccounts()
   const unitsMult = (() => {
@@ -104,12 +105,13 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
         alignItems: 'flex-end',
         justifyContent: 'center',
         zIndex: 1000,
-        padding: 16,
-        paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
+        padding: 12,
+        paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
+        className="entry-form-sheet"
         style={{
           background: 'var(--white)',
           borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
@@ -140,8 +142,9 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
           {t.formIntro}
         </p>
         <form onSubmit={handleSubmit}>
+          {/* 1. Category - Tap to select */}
           <Field
-            label={lang === 'ta' ? 'எதுக்கு? (தட்டுங்க)' : 'For what? (Tap to select)'}
+            label={t.accountFormLabel || 'For what? (Tap to select)'}
             hint={t.accountFormHint}
             title={t.accountFormHint}
           >
@@ -196,30 +199,12 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
             </div>
           </Field>
 
-          <Field label={t.date} hint={t.dateHint} title={t.dateHint}>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              title={t.dateHint}
-            />
-          </Field>
-
-          <Field label={t.particulars} hint={t.particularsHint} title={t.particularsHint}>
-            <input
-              type="text"
-              value={particulars}
-              onChange={(e) => setParticulars(e.target.value)}
-              title={t.particularsHint}
-              autoComplete="off"
-            />
-          </Field>
-
+          {/* 2. Money Out / Money In - Big icon-first buttons */}
           <Field label={t.type} hint={type === 'debit' ? t.debitHint : t.creditHint} title={t.debitHint}>
             <div
               style={{
                 display: 'flex',
-                gap: 6,
+                gap: 10,
                 padding: 4,
                 background: 'var(--gray-100)',
                 borderRadius: 'var(--radius-md)',
@@ -231,75 +216,49 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
                 onClick={() => setType('debit')}
                 style={{
                   flex: 1,
-                  padding: '12px 16px',
-                  borderRadius: 10,
+                  padding: '14px 16px',
+                  borderRadius: 12,
                   fontWeight: 600,
-                  fontSize: '0.875rem',
-                  background: type === 'debit' ? 'var(--white)' : 'transparent',
-                  color: type === 'debit' ? 'var(--slate-900)' : 'var(--text-secondary)',
+                  fontSize: '0.9375rem',
+                  background: type === 'debit' ? 'var(--red-50)' : 'transparent',
+                  color: type === 'debit' ? 'var(--red-700)' : 'var(--text-secondary)',
                   boxShadow: type === 'debit' ? 'var(--shadow-sm)' : 'none',
-                  border: type === 'debit' ? '1px solid var(--gray-200)' : '1px solid transparent',
+                  border: type === 'debit' ? '2px solid var(--red-200)' : '2px solid transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
                 }}
               >
-                {t.debitType}
+                <span style={{ fontSize: '1.5rem' }} aria-hidden="true">💸</span>
+                <span>{t.moneyOut || t.debitType}</span>
               </button>
               <button
                 type="button"
                 onClick={() => setType('credit')}
                 style={{
                   flex: 1,
-                  padding: '12px 16px',
-                  borderRadius: 10,
+                  padding: '14px 16px',
+                  borderRadius: 12,
                   fontWeight: 600,
-                  fontSize: '0.875rem',
-                  background: type === 'credit' ? 'var(--white)' : 'transparent',
-                  color: type === 'credit' ? 'var(--slate-900)' : 'var(--text-secondary)',
+                  fontSize: '0.9375rem',
+                  background: type === 'credit' ? 'var(--green-50)' : 'transparent',
+                  color: type === 'credit' ? 'var(--green-700)' : 'var(--text-secondary)',
                   boxShadow: type === 'credit' ? 'var(--shadow-sm)' : 'none',
-                  border: type === 'credit' ? '1px solid var(--gray-200)' : '1px solid transparent',
+                  border: type === 'credit' ? '2px solid var(--green-200)' : '2px solid transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
                 }}
               >
-                {t.creditType}
+                <span style={{ fontSize: '1.5rem' }} aria-hidden="true">💰</span>
+                <span>{t.moneyIn || t.creditType}</span>
               </button>
             </div>
           </Field>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <Field label={t.qtyLabel} hint={t.qtyHintForm} title={t.qtyHintForm}>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={qty}
-                onChange={(e) => setQty(e.target.value.replace(/[^\d.]/g, ''))}
-                title={t.qtyHintForm}
-                autoComplete="off"
-              />
-            </Field>
-            <Field label={t.unitsPerQty} hint={t.unitsPerQtyHint} title={t.unitsPerQtyHint}>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={unitsPerQty}
-                onChange={(e) => setUnitsPerQty(e.target.value.replace(/[^\d.]/g, ''))}
-                title={t.unitsPerQtyHint}
-                autoComplete="off"
-              />
-            </Field>
-          </div>
-          <Field label={t.pricePerUnit} hint={t.pricePerUnitHint} title={t.priceHint}>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={price}
-              onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ''))}
-              title={t.priceHint}
-              autoComplete="off"
-            />
-          </Field>
-          {computedAmount != null && (
-            <p style={{ fontSize: '0.85rem', color: 'var(--teal-700)', marginBottom: 12, fontWeight: 600 }}>
-              {Math.floor(Number(qty)).toLocaleString('en-IN')} × {Math.floor(unitsMult).toLocaleString('en-IN')} × ₹{formatPrice(Number(price))} = ₹{formatNum(computedAmount)}
-            </p>
-          )}
+          {/* 3. Amount - Big, prominent input */}
           <Field label={t.amount} hint={t.amountHint} title={t.amountHint}>
             <input
               data-testid="entry-amount"
@@ -309,8 +268,116 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
               onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ''))}
               title={t.amountHint}
               disabled={computedAmount != null}
+              placeholder="0"
+              style={{
+                fontSize: '1.25rem',
+                fontWeight: 600,
+                padding: '16px 20px',
+                borderRadius: 'var(--radius-md)',
+                border: '2px solid var(--gray-200)',
+                width: '100%',
+                textAlign: 'center',
+              }}
             />
           </Field>
+          {computedAmount != null && (
+            <p style={{ fontSize: '0.85rem', color: 'var(--teal-700)', marginBottom: 12, fontWeight: 600 }}>
+              {Math.floor(Number(qty)).toLocaleString('en-IN')} × {Math.floor(unitsMult).toLocaleString('en-IN')} × ₹{formatPrice(Number(price))} = ₹{formatNum(computedAmount)}
+            </p>
+          )}
+
+          {/* 4. Date - with Today quick button */}
+          <Field label={t.date} hint={t.dateHint} title={t.dateHint}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setDate(today)}
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: 'var(--radius-sm)',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  background: date === today ? '#2563eb' : 'var(--gray-100)',
+                  color: date === today ? 'var(--white)' : 'var(--slate-700)',
+                  border: date === today ? 'none' : '1px solid var(--gray-200)',
+                }}
+              >
+                {t.today || 'Today'}
+              </button>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                title={t.dateHint}
+                style={{ flex: 1, padding: '12px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--gray-200)' }}
+              />
+            </div>
+          </Field>
+
+          {/* 5. Collapsible "More" - particulars + qty/units/price */}
+          {showMore && (
+            <>
+              <Field label={t.particulars} hint={t.particularsHint} title={t.particularsHint}>
+                <input
+                  type="text"
+                  value={particulars}
+                  onChange={(e) => setParticulars(e.target.value)}
+                  title={t.particularsHint}
+                  autoComplete="off"
+                  style={{ padding: '12px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--gray-200)', width: '100%' }}
+                />
+              </Field>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <Field label={t.qtyLabel} hint={t.qtyHintForm} title={t.qtyHintForm}>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={qty}
+                    onChange={(e) => setQty(e.target.value.replace(/[^\d.]/g, ''))}
+                    title={t.qtyHintForm}
+                    autoComplete="off"
+                    style={{ padding: '12px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--gray-200)', width: '100%' }}
+                  />
+                </Field>
+                <Field label={t.unitsPerQty} hint={t.unitsPerQtyHint} title={t.unitsPerQtyHint}>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={unitsPerQty}
+                    onChange={(e) => setUnitsPerQty(e.target.value.replace(/[^\d.]/g, ''))}
+                    title={t.unitsPerQtyHint}
+                    autoComplete="off"
+                    style={{ padding: '12px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--gray-200)', width: '100%' }}
+                  />
+                </Field>
+              </div>
+              <Field label={t.pricePerUnit} hint={t.pricePerUnitHint} title={t.priceHint}>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ''))}
+                  title={t.priceHint}
+                  autoComplete="off"
+                  style={{ padding: '12px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--gray-200)', width: '100%' }}
+                />
+              </Field>
+            </>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowMore(!showMore)}
+            style={{
+              marginBottom: 20,
+              padding: 10,
+              background: 'none',
+              color: 'var(--slate-600)',
+              fontSize: '0.8125rem',
+              fontWeight: 500,
+            }}
+          >
+            {showMore ? t.showLess : t.showMoreOptions} {showMore ? '▲' : '▼'}
+          </button>
 
           <div style={{ display: 'flex', gap: 12, marginTop: 28 }}>
             <button

@@ -92,7 +92,7 @@ export default function DashboardView({
           border: '1px solid var(--gray-200)',
         }}
       >
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 16 }}>
+        <div className="dashboard-summary" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 16 }}>
           <div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
               {t.totalExpense || 'Total Expense'}
@@ -127,6 +127,7 @@ export default function DashboardView({
         <button
           type="button"
           onClick={onViewReport}
+          title={t.viewReportHint}
           style={{
             width: '100%',
             padding: 12,
@@ -173,9 +174,10 @@ export default function DashboardView({
               textAlign: 'center',
               color: 'var(--text-secondary)',
               fontSize: '0.9rem',
+              lineHeight: 1.6,
             }}
           >
-            {t.noEntriesGeneric || 'No entries yet. Add one to get started.'}
+            <p>{t.noEntriesGeneric || 'No entries yet. Add one to get started.'}</p>
           </div>
         ) : (
           accountList.map((acc) => (
@@ -183,6 +185,7 @@ export default function DashboardView({
               key={acc.key}
               type="button"
               onClick={() => onSelectAccount(acc.key)}
+              title={t.accountCardHint}
               style={{
                 width: '100%',
                 display: 'flex',

@@ -8,7 +8,7 @@ const RED_LIGHT = '#fef2f2'
 
 const t = {
   welcome: { en: 'Welcome', ta: 'வரவேற்கிறோம்' },
-  slogan: { en: 'Ledger Book: Simplify your kirana shop P&L', ta: 'லெட்சர் புத்தகம்: உங்கள் கடையை எளிதாக்குங்கள்' },
+  slogan: { en: 'Ledger Book: Simplify your kirana shop P&L', ta: 'கணக்கு புத்தகம்: உங்கள் கடை இலாப நட்டத்தை எளிதாக்குகிறது' },
   login: { en: 'Login', ta: 'உள்நுழை' },
   signup: { en: 'Sign up', ta: 'பதிவு செய்' },
   signInToContinue: { en: 'Sign in to your account', ta: 'உங்கள் கணக்கில் உள்நுழையுங்கள்' },
@@ -17,15 +17,15 @@ const t = {
   password: { en: 'Password', ta: 'கடவுச்சொல்' },
   name: { en: 'Name', ta: 'பெயர்' },
   back: { en: 'Back', ta: 'பின்செல்' },
-  switchToSignup: { en: "Don't have an account? Sign up", ta: 'கணக்கு இல்லையா? பதிவு செய்' },
-  switchToLogin: { en: 'Already have an account? Login', ta: 'கணக்கு உள்ளதா? உள்நுழை' },
+  switchToSignup: { en: "Don't have an account? Sign up", ta: 'கணக்கு இல்லையா? பதிவு செய்யுங்கள்' },
+  switchToLogin: { en: 'Already have an account? Login', ta: 'கணக்கு உள்ளதா? உள்நுழையுங்கள்' },
   forgotPassword: { en: 'Forgot password?', ta: 'கடவுச்சொல் மறந்தீர்களா?' },
   forgotTitle: { en: 'Reset password', ta: 'கடவுச்சொல் மீட்டமை' },
   forgotSubtitle: { en: 'Enter your email to get a reset link', ta: 'மீட்டமை இணைப்பு பெற மின்னஞ்சலை உள்ளிடுக' },
   checkEmail: { en: 'Check your email for the reset link', ta: 'மீட்டமை இணைப்பிற்கு மின்னஞ்சலை சரிபார்க்கவும்' },
   resetTitle: { en: 'Set new password', ta: 'புதிய கடவுச்சொல்லை அமைக்கவும்' },
   newPassword: { en: 'New password', ta: 'புதிய கடவுச்சொல்' },
-  confirmPassword: { en: 'Confirm password', ta: 'கடவுச்சொல்லை உறுதிப்படுத்து' },
+  confirmPassword: { en: 'Confirm password', ta: 'கடவுச்சொல்லை உறுதிப்படுத்தவும்' },
   resetSuccess: { en: 'Password updated! You can now login.', ta: 'கடவுச்சொல் மேம்படுத்தப்பட்டது! இப்போது உள்நுழையலாம்.' },
 }
 

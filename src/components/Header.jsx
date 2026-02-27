@@ -27,8 +27,8 @@ export default function Header({ title, lang, onLangToggle, user, onLogout }) {
       style={{
         background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)',
         color: 'var(--white)',
-        padding: '12px 20px',
-        paddingTop: 'calc(12px + env(safe-area-inset-top))',
+        padding: '12px 16px',
+        paddingTop: 'calc(12px + env(safe-area-inset-top, 0px))',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -40,20 +40,21 @@ export default function Header({ title, lang, onLangToggle, user, onLogout }) {
         <span style={{ fontSize: '1.75rem', lineHeight: 1 }} aria-hidden="true">
           📒
         </span>
-        <span style={{ fontSize: '1.2rem', fontWeight: 700, letterSpacing: '-0.02em' }}>
+        <span style={{ fontSize: 'clamp(1rem, 4vw, 1.2rem)', fontWeight: 700, letterSpacing: '-0.02em' }}>
           {title}
         </span>
       </div>
 
       {/* Right: Large, icon-first buttons for low-literacy users */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
         {user && (
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 8,
-              maxWidth: 140,
+              gap: 6,
+              maxWidth: 120,
+              minWidth: 0,
             }}
           >
             {avatarUrl ? (
@@ -91,6 +92,7 @@ export default function Header({ title, lang, onLangToggle, user, onLogout }) {
               </div>
             )}
             <span
+              className="header-user-name"
               style={{
                 fontSize: '0.875rem',
                 fontWeight: 500,
@@ -112,6 +114,7 @@ export default function Header({ title, lang, onLangToggle, user, onLogout }) {
             onClick={onLogout}
             title={lang === 'ta' ? 'வெளியேறு' : 'Logout'}
             aria-label={lang === 'ta' ? 'வெளியேறு' : 'Logout'}
+            className="header-logout-btn"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -128,7 +131,7 @@ export default function Header({ title, lang, onLangToggle, user, onLogout }) {
             }}
           >
             <span style={{ fontSize: '1.1rem' }} aria-hidden="true">🚪</span>
-            <span>{lang === 'ta' ? 'வெளியேறு' : 'Logout'}</span>
+            <span className="header-logout-text">{lang === 'ta' ? 'வெளியேறு' : 'Logout'}</span>
           </button>
         )}
         <div

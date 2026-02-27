@@ -96,6 +96,7 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
           type="button"
           onClick={() => setPeriod('weekly')}
           data-active={period === 'weekly'}
+          title={t.reportsWeeklyHint}
           style={{
             flex: 1,
             padding: '14px 16px',
@@ -112,6 +113,7 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
           type="button"
           onClick={() => setPeriod('monthly')}
           data-active={period === 'monthly'}
+          title={t.reportsMonthlyHint}
           style={{
             flex: 1,
             padding: '14px 16px',
@@ -143,6 +145,7 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
         <button
           type="button"
           onClick={goPrev}
+          title={t.reportsDateNavHint}
           style={{
             minWidth: 44,
             minHeight: 44,
@@ -161,6 +164,7 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
         <button
           type="button"
           onClick={goNext}
+          title={t.reportsDateNavHint}
           style={{
             minWidth: 44,
             minHeight: 44,

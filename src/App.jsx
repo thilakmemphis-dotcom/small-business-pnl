@@ -105,7 +105,7 @@ function App() {
         onLogout={logout}
       />
 
-      <main style={{ padding: '16px 20px calc(80px + env(safe-area-inset-bottom)) 20px', maxWidth: 480, margin: '0 auto' }}>
+      <main className="responsive-main" style={{ padding: '16px 20px calc(80px + env(safe-area-inset-bottom)) 20px', maxWidth: 480, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
         {activeTab === 'home' && (
           <DashboardView
             t={t}
@@ -137,29 +137,40 @@ function App() {
         {activeTab === 'reports' && (
           <>
             <ReportsView t={t} refreshTrigger={refreshTrigger} lang={lang} />
-            <button
-              type="button"
-              onClick={async () => {
-                if (window.confirm(t.clearDataConfirm)) {
-                  await clearAllData()
-                  refreshApp()
-                }
-              }}
-              title={t.clearDataHint}
-              style={{
-                width: '100%',
-                marginTop: 20,
-                padding: 14,
-                background: 'var(--white)',
-                color: 'var(--red-600)',
-                borderRadius: 'var(--radius-md)',
-                fontWeight: 600,
-                fontSize: '0.8125rem',
-                border: '1px solid var(--gray-200)',
-              }}
-            >
-              {t.clearData}
-            </button>
+            <div style={{ marginTop: 20 }}>
+              <p
+                style={{
+                  fontSize: '0.75rem',
+                  color: 'var(--text-secondary)',
+                  marginBottom: 8,
+                  lineHeight: 1.4,
+                }}
+              >
+                {t.clearDataDescription}
+              </p>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (window.confirm(t.clearDataConfirm)) {
+                    await clearAllData()
+                    refreshApp()
+                  }
+                }}
+                title={t.clearDataHint}
+                style={{
+                  width: '100%',
+                  padding: 14,
+                  background: 'var(--white)',
+                  color: 'var(--red-600)',
+                  borderRadius: 'var(--radius-md)',
+                  fontWeight: 600,
+                  fontSize: '0.8125rem',
+                  border: '1px solid var(--gray-200)',
+                }}
+              >
+                {t.clearData}
+              </button>
+            </div>
           </>
         )}
       </main>
@@ -174,6 +185,8 @@ function App() {
           setFormOpen(true)
         }}
         aria-label={t.addEntry}
+        title={t.fabHint}
+        className="fab-right"
         style={{
           position: 'fixed',
           bottom: 'calc(72px + env(safe-area-inset-bottom))',
@@ -210,11 +223,13 @@ function App() {
           padding: '12px 0',
           zIndex: 50,
         }}
+        className="nav-padding"
       >
         <button
           data-testid="nav-home"
           type="button"
           onClick={() => setActiveTab('home')}
+          title={t.navHomeHint}
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -231,6 +246,7 @@ function App() {
           data-testid="nav-ledger"
           type="button"
           onClick={() => setActiveTab('ledger')}
+          title={t.navLedgerHint}
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -247,6 +263,7 @@ function App() {
           data-testid="nav-reports"
           type="button"
           onClick={() => setActiveTab('reports')}
+          title={t.navReportsHint}
           style={{
             display: 'flex',
             flexDirection: 'column',
