@@ -108,7 +108,15 @@ export function addEntry(entry) {
 
 export function deleteEntry(id) {
   const data = getStored()
+  const entryToRemove = data.entries.find(e => e.id === id)
   data.entries = data.entries.filter(e => e.id !== id)
+  if (entryToRemove) {
+    const account = (entryToRemove.account || '').trim()
+    const hasOtherEntries = data.entries.some(e => (e.account || '').toLowerCase() === account.toLowerCase())
+    if (account && !hasOtherEntries) {
+      data.accounts = data.accounts.filter(a => (a || '').toLowerCase() !== account.toLowerCase())
+    }
+  }
   saveStored(data)
 }
 

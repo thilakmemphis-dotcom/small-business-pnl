@@ -53,12 +53,24 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
     }
   }, [accountToSelect, onAccountSelected])
 
+  const accountsWithEntries = useMemo(() => {
+    return accounts.filter((acc) =>
+      allEntries.some((e) => (e.account || '').toLowerCase() === (acc || '').toLowerCase())
+    )
+  }, [accounts, allEntries])
+
   const entries = useMemo(() => {
     if (!selectedAccount) return []
     return getEntriesWithBalance(allEntries, selectedAccount)
   }, [selectedAccount, allEntries, refreshTrigger])
 
   const summary = useMemo(() => getSummaryForPeriod(entries), [entries])
+
+  useEffect(() => {
+    if (selectedAccount && !accountsWithEntries.some((a) => (a || '').toLowerCase() === (selectedAccount || '').toLowerCase())) {
+      setSelectedAccount(accountsWithEntries[0] || '')
+    }
+  }, [accountsWithEntries, selectedAccount])
 
   const addNewItem = () => {
     const name = window.prompt(lang === 'ta' ? 'புதியது பேரு எழுது' : 'Enter new item name')
@@ -227,7 +239,7 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
             gap: 10,
           }}
         >
-          {accounts.map((acc) => (
+          {accountsWithEntries.map((acc) => (
             <button
               key={acc}
               type="button"

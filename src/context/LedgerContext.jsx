@@ -158,20 +158,33 @@ export function LedgerProvider({ children }) {
   }, [useDb, accounts, entries, saveToBackend])
 
   const deleteEntry = useCallback((id) => {
+    const entryToRemove = entries.find(e => e.id === id)
     const newEntries = entries.filter(e => e.id !== id)
+    let newAccounts = accounts
+    if (entryToRemove) {
+      const account = (entryToRemove.account || '').trim()
+      const hasOtherEntries = newEntries.some(e => (e.account || '').toLowerCase() === account.toLowerCase())
+      if (account && !hasOtherEntries) {
+        newAccounts = accounts.filter(a => (a || '').toLowerCase() !== account.toLowerCase())
+      }
+    }
     setEntries(newEntries)
-    if (useDb) saveToBackend(accounts, newEntries)
+    setAccounts(newAccounts)
+    if (useDb) saveToBackend(newAccounts, newEntries)
     else {
       storage.deleteEntry(id)
       setAccounts(storage.getStored().accounts)
     }
   }, [useDb, accounts, entries, saveToBackend])
 
-  const clearAllData = useCallback(() => {
+  const clearAllData = useCallback(async () => {
     setAccounts([...DEFAULT_ACCOUNTS])
     setEntries([])
-    if (useDb) saveToBackend(DEFAULT_ACCOUNTS, [])
-    else storage.clearAllData()
+    if (useDb) {
+      await saveToBackend(DEFAULT_ACCOUNTS, [])
+    } else {
+      storage.clearAllData()
+    }
   }, [useDb, saveToBackend])
 
   const value = {

@@ -25,6 +25,7 @@ function App() {
   const [lang, setLang] = useState(getInitialLang)
   const [activeTab, setActiveTab] = useState('home') // 'home' | 'ledger' | 'reports'
   const [formOpen, setFormOpen] = useState(false)
+  const [formOpenedFrom, setFormOpenedFrom] = useState('home') // 'home' | 'ledger' | 'fab'
   const [initialAccount, setInitialAccount] = useState('')
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [accountToSelect, setAccountToSelect] = useState(null)
@@ -42,7 +43,7 @@ function App() {
     setAccountToSelect(acc)
     refreshApp()
     setFormOpen(false)
-    setActiveTab('home')
+    setActiveTab(formOpenedFrom === 'ledger' ? 'ledger' : 'home')
   }
 
   useEffect(() => {
@@ -111,7 +112,10 @@ function App() {
             lang={lang}
             onViewReport={handleViewReport}
             onSelectAccount={handleSelectAccount}
-            onAddEntry={() => setFormOpen(true)}
+            onAddEntry={() => {
+              setFormOpenedFrom('home')
+              setFormOpen(true)
+            }}
             refreshTrigger={refreshTrigger}
           />
         )}
@@ -120,6 +124,7 @@ function App() {
             t={t}
             lang={lang}
             onAddEntry={(account) => {
+              setFormOpenedFrom('ledger')
               setInitialAccount(account || '')
               setFormOpen(true)
             }}
@@ -134,9 +139,9 @@ function App() {
             <ReportsView t={t} refreshTrigger={refreshTrigger} lang={lang} />
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 if (window.confirm(t.clearDataConfirm)) {
-                  clearAllData()
+                  await clearAllData()
                   refreshApp()
                 }
               }}
@@ -164,6 +169,7 @@ function App() {
         data-testid="fab-add-entry"
         type="button"
         onClick={() => {
+          setFormOpenedFrom('fab')
           setInitialAccount('')
           setFormOpen(true)
         }}
