@@ -41,7 +41,9 @@ function App() {
     addEntry(data)
     const acc = (data.account || '').trim() || 'Other'
     setAccountToSelect(acc)
-    refreshApp()
+    // Don't call refresh() here - it can fetch stale data before save completes.
+    // addEntry already updates state optimistically.
+    setRefreshTrigger((k) => k + 1)
     setFormOpen(false)
     setActiveTab(formOpenedFrom === 'ledger' ? 'ledger' : 'home')
   }
