@@ -5,7 +5,11 @@
 const TOKEN_KEY = 'small-business-pnl-token'
 
 export function getApiUrl() {
-  return typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL
+  const explicit = typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL
+  if (explicit) return explicit
+  // Production: frontend and API are served from same origin (Render, etc.)
+  if (typeof window !== 'undefined') return window.location.origin
+  return null
 }
 
 export function getToken() {
