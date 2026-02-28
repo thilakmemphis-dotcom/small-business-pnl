@@ -9,10 +9,19 @@ function getEntriesWithBalance(entries, account) {
     const d = a.date.localeCompare(b.date)
     return d || (a.id > b.id ? 1 : -1)
   })
-  let balance = 0
+  // Full account running balance
+  let fullBalance = 0
+  // Per-party running balance (party -> balance so far)
+  const partyBalances = {}
   return sorted.map(e => {
-    balance += (e.credit || 0) - (e.debit || 0)
-    return { ...e, balance }
+    fullBalance += (e.credit || 0) - (e.debit || 0)
+    const p = (e.party || '').trim()
+    if (p) {
+      if (!partyBalances[p]) partyBalances[p] = 0
+      partyBalances[p] += (e.credit || 0) - (e.debit || 0)
+      return { ...e, balance: partyBalances[p] }
+    }
+    return { ...e, balance: fullBalance }
   })
 }
 
@@ -61,30 +70,31 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
     return getEntriesWithBalance(allEntries, selectedAccount)
   }, [selectedAccount, allEntries, refreshTrigger])
 
-  const summary = useMemo(() => getSummaryForPeriod(entries), [entries])
+  const filteredEntries = useMemo(() => {
+    return entries.filter(e => {
+      const d = formatDate(e.date, lang)
+      const part = (e.particulars || '').toString()
+      const party = (e.party || '').trim()
+      const deb = e.debit != null ? formatNum(e.debit) : ''
+      const cred = e.credit != null ? formatNum(e.credit) : ''
+      const bal = formatNum(e.balance)
+
+      if (filters.date.size && !filters.date.has(d)) return false
+      if (filters.particulars.size && !filters.particulars.has(part) && !(party && filters.particulars.has(party))) return false
+      if (filters.debit.size && !filters.debit.has(deb)) return false
+      if (filters.credit.size && !filters.credit.has(cred)) return false
+      if (filters.balance.size && !filters.balance.has(bal)) return false
+      return true
+    })
+  }, [entries, filters, lang])
+
+  const summary = useMemo(() => getSummaryForPeriod(filteredEntries), [filteredEntries])
 
   useEffect(() => {
     if (selectedAccount && !accountsWithEntries.some((a) => (a || '').toLowerCase() === (selectedAccount || '').toLowerCase())) {
       setSelectedAccount(accountsWithEntries[0] || '')
     }
   }, [accountsWithEntries, selectedAccount])
-
-  const filteredEntries = useMemo(() => {
-    return entries.filter(e => {
-      const d = formatDate(e.date, lang)
-      const part = (e.particulars || '').toString()
-      const deb = e.debit != null ? formatNum(e.debit) : ''
-      const cred = e.credit != null ? formatNum(e.credit) : ''
-      const bal = formatNum(e.balance)
-
-      if (filters.date.size && !filters.date.has(d)) return false
-      if (filters.particulars.size && !filters.particulars.has(part)) return false
-      if (filters.debit.size && !filters.debit.has(deb)) return false
-      if (filters.credit.size && !filters.credit.has(cred)) return false
-      if (filters.balance.size && !filters.balance.has(bal)) return false
-      return true
-    })
-  }, [entries, filters, t])
 
   const distinctValues = useMemo(() => {
     const date = new Set()
@@ -95,12 +105,13 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
     entries.forEach(e => {
       date.add(formatDate(e.date, lang))
       particulars.add((e.particulars || '').toString())
+      if ((e.party || '').trim()) particulars.add((e.party || '').trim())
       if (e.debit != null) debit.add(formatNum(e.debit))
       if (e.credit != null) credit.add(formatNum(e.credit))
       balance.add(formatNum(e.balance))
     })
     return { date: [...date].sort(), particulars: [...particulars].sort(), debit: [...debit].sort(), credit: [...credit].sort(), balance: [...balance].sort() }
-  }, [entries, t])
+  }, [entries, lang])
 
   const toggleFilter = (col, val) => {
     setFilters(prev => {
@@ -460,6 +471,21 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                             {e.debit ? `💸 ${t.outShort}` : `💰 ${t.inShort}`}
                           </span>
                           <span>{e.particulars}</span>
+                          {e.party && (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                padding: '2px 6px',
+                                borderRadius: 4,
+                                fontSize: '0.65rem',
+                                fontWeight: 600,
+                                background: 'var(--teal-100)',
+                                color: 'var(--teal-700)',
+                              }}
+                            >
+                              {e.party}
+                            </span>
+                          )}
                         </div>
                         {e.qty != null && e.price != null && (
                           <div style={{ fontSize: '0.8rem', color: 'var(--gray-600)', marginTop: 4 }}>

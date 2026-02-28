@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import { AuthProvider } from './context/AuthContext'
 import { LedgerProvider } from './context/LedgerContext'
+import ErrorBoundary from './components/ErrorBoundary'
 import App from './App'
 import { translations } from './i18n'
 import './index.css'
@@ -50,10 +51,12 @@ const updateSW = registerSW({
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <AuthProvider>
-      <LedgerProvider>
-        <App />
-      </LedgerProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <LedgerProvider>
+          <App />
+        </LedgerProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 )

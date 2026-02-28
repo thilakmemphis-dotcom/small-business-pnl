@@ -87,7 +87,7 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
         setSuccess(tBoth('resetSuccess'))
       }
     } catch (err) {
-      setError(err.message || tBoth('errorGeneric'))
+      setError(api.friendlyError(err, tBoth('errorGeneric')))
     } finally {
       setLoading(false)
     }
@@ -409,7 +409,7 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
                 api.forgotPassword(emailToUse).then((data) => {
                   setSuccess(data.message)
                   if (data.resetToken) setResetToken(data.resetToken)
-                }).catch((err) => setError(err.message)).finally(() => setLoading(false))
+                }).catch((err) => setError(api.friendlyError(err, tBoth('errorGeneric')))).finally(() => setLoading(false))
               }}
             >
               <div style={{ marginBottom: 20 }}>
@@ -515,7 +515,7 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
                 setView('login')
                 setSuccess(tBoth('resetSuccess'))
               } catch (err) {
-                setError(err.message || tBoth('errorGeneric'))
+                setError(api.friendlyError(err, tBoth('errorGeneric')))
               } finally {
                 setLoading(false)
               }

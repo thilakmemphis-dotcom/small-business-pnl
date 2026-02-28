@@ -8,6 +8,20 @@ function getBalanceForAccount(entries, account) {
     .reduce((sum, e) => sum + (e.credit || 0) - (e.debit || 0), 0)
 }
 
+function getPendingByParty(entries) {
+  const byParty = {}
+  entries.forEach((e) => {
+    const p = (e.party || '').trim()
+    if (!p) return
+    if (!byParty[p]) byParty[p] = 0
+    byParty[p] += (e.debit || 0) - (e.credit || 0)
+  })
+  return Object.entries(byParty)
+    .filter(([, pending]) => pending > 0)
+    .map(([name, pending]) => ({ name, pending }))
+    .sort((a, b) => b.pending - a.pending)
+}
+
 function getLastEntryDate(entries, account) {
   const filtered = entries
     .filter((e) => (e.account || '').toLowerCase() === (account || '').toLowerCase())
@@ -54,6 +68,8 @@ export default function DashboardView({
       .filter((a) => a.balance !== 0)
       .sort((a, b) => Math.abs(b.balance) - Math.abs(a.balance))
   }, [accounts, entries, lang, refreshTrigger])
+
+  const pendingList = useMemo(() => getPendingByParty(entries), [entries, refreshTrigger])
 
   // Match Ledger/Reports calculation: sum of debits = expense, sum of credits = income
   const { totalSpent, totalReceived, net } = useMemo(() => {
@@ -132,6 +148,45 @@ export default function DashboardView({
           {t.viewReport || 'VIEW REPORT'} ›
         </button>
       </div>
+
+      {/* Pending Collections */}
+      {pendingList.length > 0 && (
+        <>
+          <div style={{ marginBottom: 12, padding: '0 4px' }}>
+            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--slate-700)' }}>
+              {t.pendingCollections || 'Pending to collect'}
+            </span>
+          </div>
+          <div
+            style={{
+              background: 'var(--white)',
+              borderRadius: 'var(--radius-md)',
+              overflow: 'hidden',
+              boxShadow: 'var(--shadow-sm)',
+              border: '1px solid var(--gray-200)',
+              marginBottom: 16,
+            }}
+          >
+            {pendingList.map(({ name, pending }) => (
+              <div
+                key={name}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 16px',
+                  borderBottom: '1px solid var(--gray-200)',
+                }}
+              >
+                <span style={{ fontWeight: 600, fontSize: '0.9375rem' }}>{name}</span>
+                <span style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--red-600)' }}>
+                  ₹{formatNum(pending)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* List Header */}
       <div

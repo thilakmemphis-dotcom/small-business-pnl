@@ -40,12 +40,13 @@ function Field({ label, hint, title, children }) {
 }
 
 export default function EntryForm({ t, onSave, onClose, initialAccount, lang = 'en' }) {
-  const { accounts, addAccount, deleteAccount } = useLedger()
+  const { accounts, entries, addAccount, deleteAccount } = useLedger()
   const longPressRef = useRef(null)
   const today = new Date().toISOString().slice(0, 10)
   const [account, setAccount] = useState(initialAccount || '')
   const [date, setDate] = useState(today)
   const [particulars, setParticulars] = useState('')
+  const [party, setParty] = useState('')
   const [qty, setQty] = useState('')
   const [price, setPrice] = useState('')
   const [unitsPerQty, setUnitsPerQty] = useState('')
@@ -124,6 +125,8 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
     setShowNewItemInput(false)
   }
 
+  const partySuggestions = [...new Set(entries.map((e) => e.party).filter(Boolean))].sort()
+
   const handleSubmit = (e) => {
     e.preventDefault()
     const acc = (account || '').trim() || 'Other'
@@ -133,6 +136,7 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
       account: acc,
       date,
       particulars: particulars.trim() || '—',
+      party: party.trim() || null,
       qty: qty !== '' ? qty : null,
       unitsPerTray: unitsPerQty && String(unitsPerQty).trim() !== '' ? unitsPerQty : '1',
       price: price !== '' ? price : null,
@@ -454,6 +458,36 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
                 <span>{t.moneyIn || t.creditType}</span>
               </button>
             </div>
+          </Field>
+
+          {/* 2b. Customer/Restaurant - for credit tracking */}
+          <Field
+            label={t.partyLabel || 'Customer / Restaurant'}
+            hint={type === 'debit' ? (t.partyHintDebit || 'If sold on credit, enter customer name') : (t.partyHintCredit || 'If collecting, enter customer name')}
+            title={type === 'debit' ? t.partyHintDebit : t.partyHintCredit}
+          >
+            <input
+              type="text"
+              value={party}
+              onChange={(e) => setParty(e.target.value)}
+              placeholder={lang === 'ta' ? 'எ.கா: ஹோட்டல், ரெஸ்டாரன்ட்' : 'e.g. Restaurant, Hotel'}
+              list="party-list"
+              autoComplete="off"
+              style={{
+                padding: '12px 16px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--gray-200)',
+                width: '100%',
+                fontSize: '0.9375rem',
+              }}
+            />
+            {partySuggestions.length > 0 && (
+              <datalist id="party-list">
+                {partySuggestions.map((p) => (
+                  <option key={p} value={p} />
+                ))}
+              </datalist>
+            )}
           </Field>
 
           {/* 3. Amount - Big, prominent input */}

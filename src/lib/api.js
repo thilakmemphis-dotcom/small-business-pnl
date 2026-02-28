@@ -4,6 +4,23 @@
 
 const TOKEN_KEY = 'small-business-pnl-token'
 
+/** Turn fetch/network errors into user-friendly messages */
+export function friendlyError(err, fallback = 'Something went wrong') {
+  if (!err) return fallback
+  const msg = err.message || String(err)
+  if (/failed to fetch|networkerror|network request failed/i.test(msg)) {
+    return 'Network error. Check your internet connection and try again.'
+  }
+  if (/timeout|timed out/i.test(msg)) {
+    return 'Request timed out. The server may be starting – please try again in a moment.'
+  }
+  if (/cors|cross-origin/i.test(msg)) {
+    return 'Connection blocked. Try refreshing or using a different browser.'
+  }
+  if (msg && msg.length > 0 && msg.length < 120) return msg
+  return fallback
+}
+
 export function getApiUrl() {
   const explicit = typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL
   if (explicit) return explicit

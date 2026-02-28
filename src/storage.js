@@ -92,6 +92,7 @@ export function computeEntry(entry) {
   const credit = isCredit ? amt : null
 
   const account = (entry.account || '').trim() || 'Other'
+  const party = (entry.party || '').trim() || null
   return {
     id: id(),
     account,
@@ -102,6 +103,7 @@ export function computeEntry(entry) {
     price,
     debit,
     credit,
+    party: party || undefined,
   }
 }
 
