@@ -295,6 +295,8 @@ In the Web Service → **Environment**, add:
 | `PORT` | `3001` |
 | `APP_URL` | Leave empty for now – you’ll add your Vercel URL after Part 2 |
 
+**Password reset:** Without SMTP, no email is sent. Users get an in-app "Set new password" button. To send emails, add `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` on Render.
+
 **Note:** Do **not** add `VITE_API_URL` here – that goes on Vercel.
 
 ---
@@ -404,6 +406,7 @@ In **Settings** → **Environment Variables**, add:
 | Blank page or login doesn't work | Check `VITE_API_URL` on Vercel points to your Render URL. Redeploy Vercel. |
 | Login works but data not saving | Check `DATABASE_URL` on Render and that the database is running. |
 | Render backend sleeps (Free tier) | First API call after idle can take ~30 seconds. Consider upgrading for production. |
+| Password reset "not working" | Without SMTP, no email is sent. After clicking "Send reset link", use the **"Set new password"** button that appears – no email needed. Or add SMTP env vars on Render for email delivery. |
 
 ---
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import * as api from '../lib/api'
 
 const ORANGE = '#ea580c'
@@ -39,6 +39,9 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
+  const forgotEmailRef = useRef(null)
+  const resetPasswordRef = useRef(null)
+  const resetConfirmRef = useRef(null)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -316,10 +319,20 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
     </div>
   )
 
-  // Forgot password view
+  // Forgot password view - use plain background (no decorative overlays that can block input on some devices)
   if (view === 'forgot') {
     return (
-      <AuthCard>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+          background: 'var(--gray-50)',
+        }}
+      >
         {onLangToggle && (
           <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 4, background: 'var(--white)', borderRadius: 10, padding: 4, zIndex: 10, boxShadow: 'var(--shadow-sm)', border: '1px solid var(--gray-200)' }}>
             <button type="button" onClick={() => lang !== 'en' && onLangToggle()} style={{ padding: '8px 14px', borderRadius: 8, fontWeight: 600, fontSize: '0.8rem', background: lang === 'en' ? 'var(--gray-100)' : 'transparent', color: lang === 'en' ? 'var(--slate-900)' : 'var(--text-secondary)', border: 'none' }}>EN</button>
@@ -336,6 +349,7 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
             boxShadow: 'var(--shadow-xl)',
             border: '1px solid var(--gray-200)',
             position: 'relative',
+            zIndex: 2,
           }}
         >
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -347,9 +361,14 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
           {success ? (
             <div style={{ textAlign: 'center' }}>
               <div style={{ padding: 16, background: '#ecfdf5', borderRadius: 12, marginBottom: 20, border: '1px solid #a7f3d0' }}>
-                <p style={{ color: 'var(--green-700)', fontSize: '0.9rem', marginBottom: 0 }}>{success}</p>
+                <p style={{ color: 'var(--green-700)', fontSize: '0.9rem', marginBottom: resetToken ? 12 : 0 }}>{success}</p>
+                {resetToken && (
+                  <p style={{ color: 'var(--green-700)', fontSize: '0.85rem', marginTop: 8, marginBottom: 0 }}>
+                    {lang === 'en' ? 'Click the button below to set a new password.' : 'புதிய கடவுச்சொல்லை அமைக்க கீழே உள்ள பொத்தானை அழுத்துங்கள்.'}
+                  </p>
+                )}
               </div>
-              {resetToken && (
+              {resetToken ? (
                 <a
                   href={`${window.location.origin}${window.location.pathname || '/'}?resetToken=${resetToken}`}
                   style={{
@@ -364,41 +383,90 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
                     boxShadow: `0 4px 14px ${RED}40`,
                   }}
                 >
-                  {lang === 'en' ? 'Continue to reset password' : 'கடவுச்சொல் மீட்டமைக்க செல்லுங்கள்'}
+                  {lang === 'en' ? 'Set new password' : 'புதிய கடவுச்சொல்லை அமைக்கவும்'}
                 </a>
+              ) : (
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 8 }}>
+                  {lang === 'en' ? "If you don't see an email, check spam or try signing up." : 'மின்னஞ்சல் இல்லையா? ஸ்பாம் சரிபார்க்கவும்.'}
+                </p>
               )}
             </div>
           ) : (
             <form
               onSubmit={(e) => {
                 e.preventDefault()
+                const emailToUse = forgotEmailRef.current?.value?.trim() || email
+                if (!emailToUse) {
+                  setError(lang === 'en' ? 'Email required' : 'மின்னஞ்சல் தேவை')
+                  return
+                }
                 setError('')
                 setLoading(true)
-                api.forgotPassword(email).then((data) => {
+                api.forgotPassword(emailToUse).then((data) => {
                   setSuccess(data.message)
                   if (data.resetToken) setResetToken(data.resetToken)
                 }).catch((err) => setError(err.message)).finally(() => setLoading(false))
               }}
             >
               <div style={{ marginBottom: 20 }}>
-                <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, fontSize: '0.875rem', color: 'var(--slate-700)' }}>{tBoth('email')} *</label>
-                <input data-testid="auth-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required style={{ border: '1px solid var(--gray-200)', borderRadius: 12, padding: '14px 16px', width: '100%' }} />
+                <label htmlFor="forgot-email" style={{ display: 'block', marginBottom: 8, fontWeight: 600, fontSize: '0.875rem', color: 'var(--slate-700)' }}>{tBoth('email')} *</label>
+                <input
+                  ref={forgotEmailRef}
+                  id="forgot-email"
+                  name="email"
+                  data-testid="auth-email"
+                  type="email"
+                  defaultValue=""
+                  autoComplete="email"
+                  inputMode="email"
+                  required
+                  style={{
+                    border: '2px solid var(--gray-200)',
+                    borderRadius: 12,
+                    padding: '14px 16px',
+                    width: '100%',
+                    fontSize: 16,
+                    boxSizing: 'border-box',
+                    WebkitAppearance: 'none',
+                    appearance: 'none',
+                  }}
+                />
               </div>
               {error && <div style={{ marginBottom: 20, padding: 14, background: RED_LIGHT, color: 'var(--red-700)', borderRadius: 12, fontSize: '0.875rem', border: '1px solid #fecaca' }}>{error}</div>}
               <button data-testid="auth-submit" type="submit" disabled={loading} style={{ width: '100%', padding: 16, background: `linear-gradient(135deg, ${ORANGE} 0%, ${RED} 100%)`, color: 'var(--white)', borderRadius: 14, fontWeight: 600, fontSize: '1rem', boxShadow: `0 4px 14px ${RED}40`, border: 'none' }}>{loading ? '…' : (lang === 'en' ? 'Send reset link' : 'மீட்டமை இணைப்பை அனுப்பு')}</button>
             </form>
           )}
         </div>
-      </AuthCard>
+      </div>
     )
   }
 
-  // Reset password view (from email link)
+  // Reset password view (from email link) - plain layout, uncontrolled inputs
   if (view === 'reset' && resetToken) {
+    const inputStyle = {
+      border: '2px solid var(--gray-200)',
+      borderRadius: 12,
+      padding: '14px 16px',
+      width: '100%',
+      fontSize: 16,
+      boxSizing: 'border-box',
+      WebkitAppearance: 'none',
+      appearance: 'none',
+    }
     return (
-      <AuthCard>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+          background: 'var(--gray-50)',
+        }}
+      >
         {onLangToggle && (
-          <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 4, background: 'var(--white)', borderRadius: 10, padding: 4, zIndex: 10, boxShadow: 'var(--shadow-sm)', border: '1px solid var(--gray-200)' }}>
+          <div style={{ position: 'fixed', top: 16, right: 16, display: 'flex', gap: 4, background: 'var(--white)', borderRadius: 10, padding: 4, boxShadow: 'var(--shadow-sm)', border: '1px solid var(--gray-200)', zIndex: 10 }}>
             <button type="button" onClick={() => lang !== 'en' && onLangToggle()} style={{ padding: '8px 14px', borderRadius: 8, fontWeight: 600, fontSize: '0.8rem', background: lang === 'en' ? 'var(--gray-100)' : 'transparent', color: lang === 'en' ? 'var(--slate-900)' : 'var(--text-secondary)', border: 'none' }}>EN</button>
             <button type="button" onClick={() => lang !== 'ta' && onLangToggle()} style={{ padding: '8px 14px', borderRadius: 8, fontWeight: 600, fontSize: '0.8rem', background: lang === 'ta' ? 'var(--gray-100)' : 'transparent', color: lang === 'ta' ? 'var(--slate-900)' : 'var(--text-secondary)', border: 'none' }}>தமிழ்</button>
           </div>
@@ -420,22 +488,72 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
             <h1 style={{ fontSize: '1.25rem', fontWeight: 700, color: RED, marginTop: 8, marginBottom: 4 }}>{tBoth('resetTitle')}</h1>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{lang === 'en' ? 'Choose a strong password (min 6 characters)' : 'வலுவான கடவுச்சொல்லை தேர்ந்தெடுக்கவும் (குறைந்தது 6 எழுத்துகள்)'}</p>
           </div>
-          <button type="button" onClick={() => { setView('login'); setResetToken(null); setError(''); setSuccess(''); }} style={{ position: 'absolute', top: 16, left: 20, padding: '6px 0', color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 500 }}>← {tBoth('back')}</button>
-          <form onSubmit={handleSubmit}>
+          <button type="button" onClick={() => { setView('login'); setResetToken(null); setError(''); setSuccess(''); }} style={{ marginBottom: 24, padding: '8px 0', color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 500 }}>← {tBoth('back')}</button>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault()
+              const pwd = resetPasswordRef.current?.value || ''
+              const confirm = resetConfirmRef.current?.value || ''
+              if (pwd !== confirm) {
+                setError(lang === 'en' ? 'Passwords do not match' : 'கடவுச்சொற்கள் பொருந்தாது')
+                return
+              }
+              if (pwd.length < 6) {
+                setError(lang === 'en' ? 'Password must be at least 6 characters' : 'குறைந்தது 6 எழுத்துகள் தேவை')
+                return
+              }
+              setError('')
+              setSuccess('')
+              setLoading(true)
+              try {
+                await api.resetPassword(resetToken, pwd)
+                setResetToken(null)
+                setView('login')
+                setSuccess(tBoth('resetSuccess'))
+              } catch (err) {
+                setError(err.message || 'Something went wrong')
+              } finally {
+                setLoading(false)
+              }
+            }}
+          >
             <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, fontSize: '0.875rem', color: 'var(--slate-700)' }}>{tBoth('newPassword')} *</label>
-              <input data-testid="auth-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" required minLength={6} placeholder="••••••" style={{ border: '1px solid var(--gray-200)', borderRadius: 12, padding: '14px 16px', width: '100%' }} />
+              <label htmlFor="reset-password" style={{ display: 'block', marginBottom: 8, fontWeight: 600, fontSize: '0.875rem', color: 'var(--slate-700)' }}>{tBoth('newPassword')} *</label>
+              <input
+                ref={resetPasswordRef}
+                id="reset-password"
+                name="new-password"
+                data-testid="auth-password"
+                type="password"
+                defaultValue=""
+                autoComplete="new-password"
+                required
+                minLength={6}
+                placeholder="••••••"
+                style={inputStyle}
+              />
             </div>
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, fontSize: '0.875rem', color: 'var(--slate-700)' }}>{tBoth('confirmPassword')} *</label>
-              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required minLength={6} placeholder="••••••" style={{ border: '1px solid var(--gray-200)', borderRadius: 12, padding: '14px 16px', width: '100%' }} />
+              <label htmlFor="reset-confirm" style={{ display: 'block', marginBottom: 8, fontWeight: 600, fontSize: '0.875rem', color: 'var(--slate-700)' }}>{tBoth('confirmPassword')} *</label>
+              <input
+                ref={resetConfirmRef}
+                id="reset-confirm"
+                name="confirm-password"
+                type="password"
+                defaultValue=""
+                autoComplete="new-password"
+                required
+                minLength={6}
+                placeholder="••••••"
+                style={inputStyle}
+              />
             </div>
             {success && <div style={{ marginBottom: 20, padding: 14, background: '#ecfdf5', color: 'var(--green-700)', borderRadius: 12, fontSize: '0.875rem', border: '1px solid #a7f3d0' }}>{success}</div>}
             {error && <div style={{ marginBottom: 20, padding: 14, background: RED_LIGHT, color: 'var(--red-700)', borderRadius: 12, fontSize: '0.875rem', border: '1px solid #fecaca' }}>{error}</div>}
             <button data-testid="auth-submit" type="submit" disabled={loading} style={{ width: '100%', padding: 16, background: `linear-gradient(135deg, ${ORANGE} 0%, ${RED} 100%)`, color: 'var(--white)', borderRadius: 14, fontWeight: 600, fontSize: '1rem', boxShadow: `0 4px 14px ${RED}40`, border: 'none' }}>{loading ? '…' : (lang === 'en' ? 'Reset password' : 'கடவுச்சொல் மீட்டமை')}</button>
           </form>
         </div>
-      </AuthCard>
+      </div>
     )
   }
 
