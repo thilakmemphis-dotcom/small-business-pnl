@@ -27,12 +27,18 @@ app = FastAPI(
     redoc_url=None,
 )
 
-# CORS
+# CORS - frontend origin must be in allowed list
+def _norm_url(s):
+    if not s or not isinstance(s, str):
+        return None
+    u = s.strip().rstrip("/")
+    return u if u.startswith("http") else None
+
 origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
-if os.getenv("APP_URL"):
-    origins.append(os.getenv("APP_URL"))
-if os.getenv("VITE_API_URL"):
-    origins.append(os.getenv("VITE_API_URL"))
+for key in ("APP_URL", "VITE_API_URL", "CORS_ORIGIN"):
+    val = _norm_url(os.getenv(key))
+    if val and val not in origins:
+        origins.append(val)
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -42,6 +48,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 app.include_router(auth_router)

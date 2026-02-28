@@ -402,7 +402,7 @@ In **Settings** → **Environment Variables**, add:
 
 | Problem | Fix |
 |--------|-----|
-| "Failed to fetch" or CORS error | Add `APP_URL` on Render = your exact Vercel URL. Redeploy Render. |
+| "Failed to fetch" or CORS error | On Render → Environment: set `APP_URL` = your **exact** Vercel URL (e.g. `https://small-business-pnl.vercel.app`) – no trailing slash. Redeploy Render. |
 | Blank page or login doesn't work | Check `VITE_API_URL` on Vercel points to your Render URL. Redeploy Vercel. |
 | Login works but data not saving | Check `DATABASE_URL` on Render and that the database is running. |
 | Render backend sleeps (Free tier) | First API call after idle can take ~30 seconds. Consider upgrading for production. |
