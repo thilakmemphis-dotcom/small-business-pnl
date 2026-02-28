@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
+import { setSWRegistration, initVisibilityCheck } from './lib/pwa'
 import { AuthProvider } from './context/AuthContext'
 import { LedgerProvider } from './context/LedgerContext'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -11,6 +12,9 @@ import './index.css'
 // Service worker: show "Refresh to update" banner when new version is available
 const LANG_KEY = 'small-business-pnl-lang'
 const updateSW = registerSW({
+  onRegister(reg) {
+    setSWRegistration(reg)
+  },
   onNeedRefresh() {
     const lang = localStorage.getItem(LANG_KEY) || 'en'
     const t = translations[lang] || translations.en
@@ -48,6 +52,8 @@ const updateSW = registerSW({
     document.body.appendChild(banner)
   },
 })
+
+initVisibilityCheck()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

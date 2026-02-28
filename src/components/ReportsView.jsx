@@ -261,7 +261,10 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 600 }}>{getAccountLabel(e.account, lang)} · {e.particulars}</div>
+                      <div style={{ fontWeight: 600 }}>
+                        {getAccountLabel(e.account, lang)}
+                        {e.party ? ` · ${e.party}` : ''} · {e.particulars}
+                      </div>
                       {e.qty != null && e.price != null && (
                         <div style={{ fontSize: '0.8rem', color: 'var(--gray-600)', marginTop: 2 }}>
                           {Math.floor(e.qty).toLocaleString('en-IN')} × {(e.unitsPerTray || 1)} × ₹{formatPrice(e.price)} = ₹{formatNum(e.debit || e.credit)}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { translations } from './i18n'
+import { checkForUpdates } from './lib/pwa'
 import { useLedger } from './context/LedgerContext'
 import { useAuth } from './context/AuthContext'
 import Header from './components/Header'
@@ -151,26 +152,44 @@ function App() {
         {activeTab === 'reports' && (
           <>
             <ReportsView t={t} refreshTrigger={refreshTrigger} lang={lang} />
-            <div style={{ marginTop: 20 }}>
-              <p
-                style={{
-                  fontSize: '0.75rem',
-                  color: 'var(--text-secondary)',
-                  marginBottom: 8,
-                  lineHeight: 1.4,
-                }}
-              >
-                {t.clearDataDescription}
-              </p>
+            <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button
                 type="button"
-                onClick={async () => {
-                  if (window.confirm(t.clearDataConfirm)) {
-                    await clearAllData()
-                    refreshApp()
-                  }
+                onClick={() => checkForUpdates()}
+                title={t.checkForUpdates}
+                style={{
+                  width: '100%',
+                  padding: 14,
+                  background: 'var(--white)',
+                  color: 'var(--slate-700)',
+                  borderRadius: 'var(--radius-md)',
+                  fontWeight: 600,
+                  fontSize: '0.8125rem',
+                  border: '1px solid var(--gray-200)',
                 }}
-                title={t.clearDataHint}
+              >
+                {t.checkForUpdates}
+              </button>
+              <div>
+                <p
+                  style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--text-secondary)',
+                    marginBottom: 8,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {t.clearDataDescription}
+                </p>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (window.confirm(t.clearDataConfirm)) {
+                      await clearAllData()
+                      refreshApp()
+                    }
+                  }}
+                  title={t.clearDataHint}
                 style={{
                   width: '100%',
                   padding: 14,
@@ -184,6 +203,7 @@ function App() {
               >
                 {t.clearData}
               </button>
+              </div>
             </div>
           </>
         )}

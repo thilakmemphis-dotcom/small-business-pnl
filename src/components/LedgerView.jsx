@@ -147,19 +147,18 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
     }
   }
 
-  const FilterDropdown = ({ col, label }) => {
+  const FilterDropdown = ({ col }) => {
     const vals = distinctValues[col]
     const active = filters[col].size > 0
     const isOpen = filterOpen === col
     return (
-      <div style={{ position: 'relative', display: 'inline-block' }}>
+      <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
         <button
           type="button"
           onClick={() => setFilterOpen(isOpen ? null : col)}
           title={t.filter}
           style={{
             padding: '4px 6px',
-            marginLeft: 4,
             borderRadius: 4,
             background: active ? 'var(--teal-100)' : 'transparent',
             border: '1px solid transparent',
@@ -229,7 +228,7 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
             </div>
           </>
         )}
-      </div>
+      </span>
     )
   }
 
@@ -359,7 +358,6 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                 <tr>
                   <th
                     style={{
-                      textAlign: 'left',
                       padding: '14px 12px',
                       background: 'var(--slate-100)',
                       fontWeight: 600,
@@ -368,12 +366,13 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                       borderBottom: '2px solid var(--gray-200)',
                     }}
                   >
-                    {t.date}
-                    <FilterDropdown col="date" />
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 4 }}>
+                      {t.date}
+                      <FilterDropdown col="date" />
+                    </div>
                   </th>
                   <th
                     style={{
-                      textAlign: 'left',
                       padding: '14px 12px',
                       background: 'var(--slate-100)',
                       fontWeight: 600,
@@ -382,12 +381,13 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                       borderBottom: '2px solid var(--gray-200)',
                     }}
                   >
-                    {t.particulars}
-                    <FilterDropdown col="particulars" />
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 4 }}>
+                      {t.particulars}
+                      <FilterDropdown col="particulars" />
+                    </div>
                   </th>
                   <th
                     style={{
-                      textAlign: 'right',
                       padding: '14px 12px',
                       background: 'var(--slate-100)',
                       fontWeight: 600,
@@ -397,13 +397,14 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                     }}
                     title={t.debitHint}
                   >
-                    <span style={{ marginRight: 4 }} aria-hidden="true">💸</span>
-                    {t.outShort || t.debit}
-                    <FilterDropdown col="debit" />
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                      <span aria-hidden="true">💸</span>
+                      <span>{t.outShort || t.debit}</span>
+                      <FilterDropdown col="debit" />
+                    </div>
                   </th>
                   <th
                     style={{
-                      textAlign: 'right',
                       padding: '14px 12px',
                       background: 'var(--slate-100)',
                       fontWeight: 600,
@@ -413,13 +414,14 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                     }}
                     title={t.creditHint}
                   >
-                    <span style={{ marginRight: 4 }} aria-hidden="true">💰</span>
-                    {t.inShort || t.credit}
-                    <FilterDropdown col="credit" />
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                      <span aria-hidden="true">💰</span>
+                      <span>{t.inShort || t.credit}</span>
+                      <FilterDropdown col="credit" />
+                    </div>
                   </th>
                   <th
                     style={{
-                      textAlign: 'right',
                       padding: '14px 12px',
                       background: 'var(--slate-100)',
                       fontWeight: 600,
@@ -428,8 +430,10 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                       borderBottom: '2px solid var(--gray-200)',
                     }}
                   >
-                    {t.balance}
-                    <FilterDropdown col="balance" />
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                      {t.balance}
+                      <FilterDropdown col="balance" />
+                    </div>
                   </th>
                   <th style={{ width: 48, padding: '14px 8px', background: 'var(--slate-100)', borderBottom: '2px solid var(--gray-200)' }} />
                 </tr>
