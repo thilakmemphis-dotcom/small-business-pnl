@@ -5,6 +5,7 @@ import * as api from '../lib/api'
 
 const DEFAULT_ACCOUNTS = [
   'Eggs', 'Vegetables', 'Rice', 'Oil', 'Milk', 'Flour', 'Sugar', 'Tea', 'Salt', 'Spices',
+  'Ginger', 'Garlic', 'Onion', 'Tomato', 'Potato', 'Dal', 'Coconut', 'Lemon',
   'Groceries', 'Fruits', 'Meat', 'Fish', 'Snacks', 'Cash', 'Sales', 'Rent', 'Other',
 ]
 
@@ -157,6 +158,22 @@ export function LedgerProvider({ children }) {
     return trimmed
   }, [useDb, accounts, entries, saveToBackend])
 
+  const deleteAccount = useCallback((name) => {
+    const trimmed = (name || '').trim()
+    if (!trimmed) return
+    const lower = trimmed.toLowerCase()
+    const newAccounts = accounts.filter(a => (a || '').toLowerCase() !== lower)
+    const newEntries = entries.filter(e => (e.account || '').toLowerCase() !== lower)
+    setAccounts(newAccounts)
+    setEntries(newEntries)
+    if (useDb) saveToBackend(newAccounts, newEntries)
+    else {
+      storage.deleteAccount(name)
+      setAccounts(storage.getStored().accounts)
+      setEntries(storage.getStored().entries)
+    }
+  }, [useDb, accounts, entries, saveToBackend])
+
   const deleteEntry = useCallback((id) => {
     const entryToRemove = entries.find(e => e.id === id)
     const newEntries = entries.filter(e => e.id !== id)
@@ -194,6 +211,7 @@ export function LedgerProvider({ children }) {
     useDb,
     addEntry,
     addAccount,
+    deleteAccount,
     deleteEntry,
     clearAllData,
     refresh: loadData,

@@ -31,8 +31,14 @@ function formatDate(dateStr, lang = 'en') {
   return d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short', year: '2-digit' })
 }
 
+const DEFAULT_ACCOUNTS = new Set([
+  'Eggs', 'Vegetables', 'Rice', 'Oil', 'Milk', 'Flour', 'Sugar', 'Tea', 'Salt', 'Spices',
+  'Ginger', 'Garlic', 'Onion', 'Tomato', 'Potato', 'Dal', 'Coconut', 'Lemon',
+  'Groceries', 'Fruits', 'Meat', 'Fish', 'Snacks', 'Cash', 'Sales', 'Rent', 'Other',
+])
+
 export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, lang, accountToSelect, onAccountSelected }) {
-  const { accounts, entries: allEntries, addAccount, deleteEntry } = useLedger()
+  const { accounts, entries: allEntries, deleteEntry, deleteAccount } = useLedger()
   const [selectedAccount, setSelectedAccount] = useState('')
   const [filterOpen, setFilterOpen] = useState(null) // 'date' | 'particulars' | 'debit' | 'credit' | 'balance'
   const [filters, setFilters] = useState({ date: new Set(), particulars: new Set(), debit: new Set(), credit: new Set(), balance: new Set() })
@@ -62,17 +68,6 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
       setSelectedAccount(accountsWithEntries[0] || '')
     }
   }, [accountsWithEntries, selectedAccount])
-
-  const addNewItem = () => {
-    const name = window.prompt(t.enterNewItemName)
-    if (name && name.trim()) {
-      const added = addAccount(name.trim())
-      if (added) {
-        setSelectedAccount(added)
-        onRefresh?.()
-      }
-    }
-  }
 
   const filteredEntries = useMemo(() => {
     return entries.filter(e => {
@@ -126,6 +121,17 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
   const handleDelete = (id) => {
     if (window.confirm(t.deleteConfirm)) {
       deleteEntry(id)
+      onRefresh?.()
+    }
+  }
+
+  const isCustomAccount = (a) => !DEFAULT_ACCOUNTS.has(a)
+  const handleRemoveItem = (name) => {
+    const msg = (t.removeItemConfirm || 'Remove "{name}" and all its entries?').replace('{name}', name)
+    if (window.confirm(msg)) {
+      const others = accountsWithEntries.filter(a => (a || '').toLowerCase() !== (name || '').toLowerCase())
+      deleteAccount(name)
+      setSelectedAccount(others[0] || '')
       onRefresh?.()
     }
   }
@@ -234,56 +240,100 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
           }}
         >
           {accountsWithEntries.map((acc) => (
-            <button
-              key={acc}
-              type="button"
-              onClick={() => setSelectedAccount(acc)}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 6,
-                padding: '14px 8px',
-                borderRadius: 'var(--radius-md)',
-                background: selectedAccount === acc ? '#2563eb' : 'var(--white)',
-                color: selectedAccount === acc ? 'var(--white)' : 'var(--slate-800)',
-                border: selectedAccount === acc ? 'none' : '1px solid var(--gray-200)',
-                boxShadow: selectedAccount === acc ? '0 2px 8px rgba(37,99,235,0.3)' : 'var(--shadow-sm)',
-              }}
-            >
-              <span style={{ fontSize: '1.75rem' }}>{getAccountIcon(acc)}</span>
-              <span style={{ fontSize: '0.7rem', fontWeight: 600, lineHeight: 1.2, textAlign: 'center' }}>
-                {getAccountLabel(acc, lang)}
-              </span>
-            </button>
+            <div key={acc} style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setSelectedAccount(acc)}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '14px 8px',
+                  borderRadius: 'var(--radius-md)',
+                  background: selectedAccount === acc ? '#2563eb' : 'var(--white)',
+                  color: selectedAccount === acc ? 'var(--white)' : 'var(--slate-800)',
+                  border: selectedAccount === acc ? 'none' : '1px solid var(--gray-200)',
+                  boxShadow: selectedAccount === acc ? '0 2px 8px rgba(37,99,235,0.3)' : 'var(--shadow-sm)',
+                  width: '100%',
+                }}
+              >
+                <span style={{ fontSize: '1.75rem' }}>{getAccountIcon(acc)}</span>
+                <span style={{ fontSize: '0.7rem', fontWeight: 600, lineHeight: 1.2, textAlign: 'center' }}>
+                  {getAccountLabel(acc, lang)}
+                </span>
+              </button>
+              {isCustomAccount(acc) && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleRemoveItem(acc); }}
+                  title={t.removeItem}
+                  aria-label={t.removeItem}
+                  style={{
+                    position: 'absolute',
+                    top: 6,
+                    right: 6,
+                    width: 24,
+                    height: 24,
+                    borderRadius: '50%',
+                    background: 'var(--red-600)',
+                    color: 'white',
+                    border: '2px solid white',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 0,
+                    cursor: 'pointer',
+                    zIndex: 2,
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           ))}
-          <button
-            type="button"
-            onClick={addNewItem}
-            title={t.addItemHint}
-            aria-label={t.addItemHint}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 4,
-              padding: 14,
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--gray-100)',
-              border: '2px dashed var(--gray-300)',
-            }}
-          >
-            <span style={{ fontSize: '1.5rem' }}>➕</span>
-            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-              {t.newItem || 'New'}
-            </span>
-          </button>
         </div>
       </div>
 
       {selectedAccount && (
         <>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              marginBottom: 12,
+              flexWrap: 'wrap',
+            }}
+          >
+            <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--slate-800)' }}>
+              {getAccountIcon(selectedAccount)} {getAccountLabel(selectedAccount, lang)}
+            </span>
+            {isCustomAccount(selectedAccount) && (
+              <button
+                type="button"
+                onClick={() => handleRemoveItem(selectedAccount)}
+                title={t.removeItem}
+                aria-label={t.removeItem}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'var(--red-600)',
+                  color: 'white',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                {t.removeItem}
+              </button>
+            )}
+          </div>
           <div style={{ overflowX: 'auto', marginBottom: 12, WebkitOverflowScrolling: 'touch' }}>
             <table
               className="ledger-table-font"

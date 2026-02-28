@@ -65,9 +65,12 @@
 html {
   font-size: 16px;
   -webkit-tap-highlight-color: transparent;
-  /* Support mobile viewport (S8+ etc) - 100dvh when supported, fallback to 100vh */
+  /* Support mobile viewport - 100dvh when supported, fallback to 100vh */
   min-height: 100vh;
+  min-height: 100dvh;
   min-height: -webkit-fill-available;
+  /* Prevent overscroll / pull-to-refresh conflicts */
+  overscroll-behavior: none;
 }
 
 body {
@@ -80,6 +83,11 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Prevent horizontal scroll on any device */
+  overflow-x: hidden;
+  /* Safe areas for notched devices (iPhone X+, Android with punch hole) */
+  padding-left: env(safe-area-inset-left, 0);
+  padding-right: env(safe-area-inset-right, 0);
 }
 
 body.lang-ta {
@@ -132,22 +140,59 @@ textarea:focus {
   min-height: 100dvh;
   min-height: -webkit-fill-available;
   padding-bottom: env(safe-area-inset-bottom, 0);
+  max-width: 100vw;
 }
 
-/* Samsung S8+ (360px) and small phones */
+/* Ensure inputs don't trigger iOS zoom (16px minimum) */
+input, select, textarea {
+  font-size: 16px !important;
+}
+@media (max-width: 360px) {
+  input, select, textarea {
+    font-size: 15px !important;
+  }
+}
+
+/* Very small phones: iPhone SE (320px), Galaxy Fold (280px folded) */
+@media (max-width: 360px) {
+  :root {
+    font-size: 14px;
+  }
+}
+
+/* Small phones: 360-400px (common Android) */
 @media (max-width: 400px) {
   :root {
     font-size: 15px;
   }
 }
 
+/* Medium phones: 400-480px */
+@media (max-width: 480px) {
+  :root {
+    font-size: 15px;
+  }
+}
+
+/* Landscape on small screens - reduce nav height */
+@media (max-height: 500px) and (orientation: landscape) {
+  .nav-padding { padding-top: 6px !important; padding-bottom: 6px !important; }
+  .fab-right { bottom: calc(56px + env(safe-area-inset-bottom)) !important; }
+}
+
+/* Touch target class - use for key actions on touch devices */
+.touch-target-44 {
+  min-height: 44px !important;
+  min-width: 44px !important;
+}
+
 /* Responsive utilities - use in components via className */
 @media (max-width: 400px) {
-  .responsive-px { padding-left: 12px !important; padding-right: 12px !important; }
-  .responsive-main { padding-left: 12px !important; padding-right: 12px !important; }
+  .responsive-px { padding-left: max(12px, env(safe-area-inset-left)) !important; padding-right: max(12px, env(safe-area-inset-right)) !important; }
+  .responsive-main { padding-left: max(12px, env(safe-area-inset-left)) !important; padding-right: max(12px, env(safe-area-inset-right)) !important; }
   .header-user-name { max-width: 70px !important; font-size: 0.75rem !important; }
   .header-logout-text { display: none !important; }
-  .header-logout-btn { min-width: 40px !important; padding: 8px !important; }
+  .header-logout-btn { min-width: 44px !important; padding: 8px !important; }
   .account-grid-small { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
   .ledger-table-font { font-size: 0.8rem !important; }
   .ledger-table-font th { padding: 10px 6px !important; font-size: 0.7rem !important; }
@@ -155,7 +200,35 @@ textarea:focus {
   .fab-right { right: 12px !important; }
   .nav-padding { padding-left: 8px !important; padding-right: 8px !important; }
   .entry-form-sheet { padding: 20px 16px !important; max-height: 85vh !important; }
+  @supports (max-height: 85dvh) {
+    .entry-form-sheet { max-height: 85dvh !important; }
+  }
   .dashboard-summary { gap: 10px !important; }
+}
+
+/* Dashboard summary - tighter on tiny screens */
+@media (max-width: 360px) {
+  .dashboard-summary { gap: 8px !important; }
+}
+
+/* Extra small: 320px (iPhone SE 1st gen, Galaxy Fold folded) */
+@media (max-width: 360px) {
+  .responsive-main { padding-left: max(10px, env(safe-area-inset-left)) !important; padding-right: max(10px, env(safe-area-inset-right)) !important; }
+  .account-grid-small { grid-template-columns: repeat(3, 1fr) !important; gap: 6px !important; }
+  .account-grid-small button { padding: 10px 4px !important; }
+  .ledger-table-font { font-size: 0.75rem !important; }
+  .ledger-table-font th, .ledger-table-font td { padding: 8px 4px !important; }
+  .entry-form-sheet { padding: 16px 12px !important; max-height: 90vh !important; }
+  @supports (max-height: 90dvh) {
+    .entry-form-sheet { max-height: 90dvh !important; }
+  }
+  .fab-right { right: 10px !important; width: 48px !important; height: 48px !important; bottom: calc(64px + env(safe-area-inset-bottom)) !important; }
+  .nav-padding { padding: 8px 4px !important; }
+}
+
+/* Entry form account grid - 4 cols on wide, 3 on narrow */
+@media (max-width: 380px) {
+  .entry-form-account-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 6px !important; }
 }
 
 .ledger-row:hover {

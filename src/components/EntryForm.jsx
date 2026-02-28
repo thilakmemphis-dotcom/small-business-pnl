@@ -1,6 +1,12 @@
-import { useState } from 'react'
-import { getAccounts, addAccount } from '../storage'
-import { getAccountLabel, getAccountIcon } from '../i18n'
+import { useState, useRef, useEffect } from 'react'
+import { useLedger } from '../context/LedgerContext'
+import { getAccountLabel, getAccountIcon, getItemSuggestions } from '../i18n'
+
+const DEFAULT_ACCOUNTS = new Set([
+  'Eggs', 'Vegetables', 'Rice', 'Oil', 'Milk', 'Flour', 'Sugar', 'Tea', 'Salt', 'Spices',
+  'Ginger', 'Garlic', 'Onion', 'Tomato', 'Potato', 'Dal', 'Coconut', 'Lemon',
+  'Groceries', 'Fruits', 'Meat', 'Fish', 'Snacks', 'Cash', 'Sales', 'Rent', 'Other',
+])
 
 function formatNum(n) {
   return Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -34,6 +40,8 @@ function Field({ label, hint, title, children }) {
 }
 
 export default function EntryForm({ t, onSave, onClose, initialAccount, lang = 'en' }) {
+  const { accounts, addAccount, deleteAccount } = useLedger()
+  const longPressRef = useRef(null)
   const today = new Date().toISOString().slice(0, 10)
   const [account, setAccount] = useState(initialAccount || '')
   const [date, setDate] = useState(today)
@@ -44,8 +52,42 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
   const [amount, setAmount] = useState('')
   const [type, setType] = useState('debit')
   const [showMore, setShowMore] = useState(false)
+  const [showNewItemInput, setShowNewItemInput] = useState(false)
+  const [newItemName, setNewItemName] = useState('')
+  const newItemInputRef = useRef(null)
 
-  const accounts = getAccounts()
+  useEffect(() => {
+    if (showNewItemInput) newItemInputRef.current?.focus()
+  }, [showNewItemInput])
+
+  const isCustomAccount = (a) => !DEFAULT_ACCOUNTS.has(a)
+  const itemSuggestions = getItemSuggestions(newItemName, lang)
+
+  const handleRemoveItem = (name) => {
+    const msg = (t.removeItemConfirm || 'Remove "{name}" and all its entries?').replace('{name}', name)
+    if (window.confirm(msg)) {
+      deleteAccount(name)
+      if (account === name) setAccount('')
+    }
+  }
+
+  const handleAccountTouchStart = (a) => {
+    if (!isCustomAccount(a)) return
+    longPressRef.current = setTimeout(() => handleRemoveItem(a), 600)
+  }
+
+  const handleAccountTouchEnd = () => {
+    if (longPressRef.current) {
+      clearTimeout(longPressRef.current)
+      longPressRef.current = null
+    }
+  }
+
+  const handleAccountContextMenu = (e, a) => {
+    if (!isCustomAccount(a)) return
+    e.preventDefault()
+    handleRemoveItem(a)
+  }
   const unitsMult = (() => {
     const v = String(unitsPerQty || '').trim()
     const n = Number(v)
@@ -57,11 +99,29 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
     : null
 
   const handleAddItem = () => {
-    const name = window.prompt(t.addItemHint)
-    if (name && name.trim()) {
-      const added = addAccount(name.trim())
-      if (added) setAccount(added)
+    setShowNewItemInput(true)
+  }
+
+  const handleSubmitNewItem = (e) => {
+    e?.preventDefault()
+    const name = newItemName.trim()
+    if (name) {
+      const added = addAccount(name)
+      if (added) {
+        setAccount(added)
+        setNewItemName('')
+        setShowNewItemInput(false)
+      }
+    } else {
+      setShowNewItemInput(false)
     }
+  }
+
+  const handleSelectSuggestion = (key) => {
+    addAccount(key)
+    setAccount(key)
+    setNewItemName('')
+    setShowNewItemInput(false)
   }
 
   const handleSubmit = (e) => {
@@ -106,10 +166,12 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
           background: 'var(--white)',
           borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
           width: '100%',
-          maxWidth: 480,
+          maxWidth: 'min(480px, 100vw)',
           maxHeight: '90vh',
           overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
           padding: 28,
+          paddingBottom: 'max(28px, env(safe-area-inset-bottom))',
           boxShadow: 'var(--shadow-xl)',
           border: '1px solid var(--gray-200)',
           position: 'relative',
@@ -139,6 +201,7 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
             title={t.accountFormHint}
           >
             <div
+              className="entry-form-account-grid"
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(4, 1fr)',
@@ -146,26 +209,74 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
               }}
             >
               {accounts.map((a) => (
-                <button
+                <div
                   key={a}
-                  data-testid={`account-${a}`}
-                  type="button"
-                  onClick={() => setAccount(a)}
                   style={{
+                    position: 'relative',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: 4,
-                    padding: '10px 6px',
-                    borderRadius: 'var(--radius-sm)',
-                    background: account === a ? '#2563eb' : 'var(--gray-100)',
-                    color: account === a ? 'var(--white)' : 'var(--slate-800)',
-                    border: account === a ? 'none' : '1px solid var(--gray-200)',
                   }}
                 >
-                  <span style={{ fontSize: '1.25rem' }}>{getAccountIcon(a)}</span>
-                  <span style={{ fontSize: '0.65rem', fontWeight: 600 }}>{getAccountLabel(a, lang)}</span>
-                </button>
+                  <button
+                    data-testid={`account-${a}`}
+                    type="button"
+                    onClick={() => setAccount(a)}
+                    onTouchStart={() => handleAccountTouchStart(a)}
+                    onTouchEnd={handleAccountTouchEnd}
+                    onTouchCancel={handleAccountTouchEnd}
+                    onContextMenu={(e) => handleAccountContextMenu(e, a)}
+                    title={isCustomAccount(a) ? (t.removeItem || 'Remove item') : undefined}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '10px 6px',
+                      borderRadius: 'var(--radius-sm)',
+                      background: account === a ? '#2563eb' : 'var(--gray-100)',
+                      color: account === a ? 'var(--white)' : 'var(--slate-800)',
+                      border: account === a ? 'none' : '1px solid var(--gray-200)',
+                      width: '100%',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.25rem' }}>{getAccountIcon(a)}</span>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 600 }}>{getAccountLabel(a, lang)}</span>
+                  </button>
+                  {isCustomAccount(a) && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleRemoveItem(a); }}
+                      title={t.removeItem}
+                      aria-label={t.removeItem}
+                      style={{
+                        position: 'absolute',
+                        top: 4,
+                        right: 4,
+                        width: 28,
+                        height: 28,
+                        minWidth: 28,
+                        minHeight: 28,
+                        borderRadius: '50%',
+                        background: 'var(--red-600)',
+                        color: 'white',
+                        border: '2px solid white',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                        fontSize: '0.85rem',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: 0,
+                        lineHeight: 1,
+                        cursor: 'pointer',
+                        zIndex: 2,
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               ))}
               <button
                 type="button"
@@ -187,6 +298,103 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
                 <span style={{ fontSize: '0.6rem', fontWeight: 600 }}>{lang === 'ta' ? 'புதியது' : 'New'}</span>
               </button>
             </div>
+            {showNewItemInput && (
+              <div style={{ marginTop: 10, position: 'relative' }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    ref={newItemInputRef}
+                    type="text"
+                    value={newItemName}
+                    onChange={(e) => setNewItemName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSubmitNewItem(e)
+                      if (e.key === 'Escape') { setShowNewItemInput(false); setNewItemName(''); }
+                    }}
+                    placeholder={t.enterNewItemName}
+                    style={{
+                      flex: 1,
+                      padding: '10px 14px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '2px solid var(--gray-200)',
+                      fontSize: '0.9375rem',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSubmitNewItem}
+                    style={{
+                      padding: '10px 16px',
+                      borderRadius: 'var(--radius-sm)',
+                      background: '#2563eb',
+                      color: 'var(--white)',
+                      fontWeight: 600,
+                      fontSize: '0.875rem',
+                      border: 'none',
+                    }}
+                  >
+                    {t.addShort || 'Add'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowNewItemInput(false); setNewItemName(''); }}
+                    title={t.cancel}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'var(--gray-200)',
+                      color: 'var(--slate-700)',
+                      border: 'none',
+                      fontSize: '1rem',
+                    }}
+                    aria-label={t.cancel}
+                  >
+                    ✕
+                  </button>
+                </div>
+                {itemSuggestions.length > 0 && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      marginTop: 4,
+                      background: 'var(--white)',
+                      border: '1px solid var(--gray-200)',
+                      borderRadius: 'var(--radius-sm)',
+                      boxShadow: 'var(--shadow-md)',
+                      maxHeight: 200,
+                      overflowY: 'auto',
+                      zIndex: 10,
+                    }}
+                  >
+                    {itemSuggestions.map(({ key, label }) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => handleSelectSuggestion(key)}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '10px 14px',
+                          background: 'transparent',
+                          border: 'none',
+                          textAlign: 'left',
+                          fontSize: '0.9375rem',
+                          cursor: 'pointer',
+                          color: 'var(--slate-800)',
+                        }}
+                      >
+                        <span style={{ fontSize: '1.1rem' }}>{getAccountIcon(key)}</span>
+                        <span>{label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </Field>
 
           {/* 2. Money Out / Money In - Big icon-first buttons */}

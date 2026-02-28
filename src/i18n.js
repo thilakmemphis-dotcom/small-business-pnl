@@ -11,6 +11,14 @@ export const accountLabels = {
     Tea: 'Tea',
     Salt: 'Salt',
     Spices: 'Spices',
+    Ginger: 'Ginger',
+    Garlic: 'Garlic',
+    Onion: 'Onion',
+    Tomato: 'Tomato',
+    Potato: 'Potato',
+    Dal: 'Dal',
+    Coconut: 'Coconut',
+    Lemon: 'Lemon',
     Groceries: 'Groceries',
     Fruits: 'Fruits',
     Meat: 'Meat',
@@ -20,6 +28,28 @@ export const accountLabels = {
     Sales: 'Sales',
     Rent: 'Rent',
     Other: 'Other',
+    Banana: 'Banana',
+    Mango: 'Mango',
+    Bread: 'Bread',
+    Butter: 'Butter',
+    Paneer: 'Paneer',
+    Asafoetida: 'Asafoetida',
+    CurryLeaves: 'Curry leaves',
+    Biscuits: 'Biscuits',
+    Chicken: 'Chicken',
+    Coffee: 'Coffee',
+    Honey: 'Honey',
+    Soap: 'Soap',
+    Noodles: 'Noodles',
+    Corn: 'Corn',
+    Peanuts: 'Peanuts',
+    Tamarind: 'Tamarind',
+    ColdDrink: 'Cold drink',
+    Pickle: 'Pickle',
+    Toothpaste: 'Toothpaste',
+    Ghee: 'Ghee',
+    Yogurt: 'Yogurt',
+    Papad: 'Papad',
   },
   ta: {
     Eggs: 'முட்டை',
@@ -31,7 +61,15 @@ export const accountLabels = {
     Sugar: 'சர்க்கரை',
     Tea: 'தேநீர்',
     Salt: 'உப்பு',
-    Spices: 'மசாலை',
+    Spices: 'மசாலா',
+    Ginger: 'இஞ்சி',
+    Garlic: 'பூண்டு',
+    Onion: 'வெங்காயம்',
+    Tomato: 'தக்காளி',
+    Potato: 'உருளைக்கிழங்கு',
+    Dal: 'பருப்பு',
+    Coconut: 'தேங்காய்',
+    Lemon: 'எலுமிச்சை',
     Groceries: 'பண்டம்',
     Fruits: 'பழம்',
     Meat: 'இறைச்சி',
@@ -41,13 +79,85 @@ export const accountLabels = {
     Sales: 'விற்பனை',
     Rent: 'வாடகை',
     Other: 'மற்றது',
+    Banana: 'வாழை',
+    Mango: 'மாம்பழம்',
+    Bread: 'ரொட்டி',
+    Butter: 'வெண்ணெய்',
+    Paneer: 'பன்னீர்',
+    Asafoetida: 'பெருங்காயம்',
+    CurryLeaves: 'கறிவேப்பிலை',
+    Biscuits: 'பிஸ்கட்',
+    Chicken: 'கோழி',
+    Coffee: 'காபி',
+    Honey: 'தேன்',
+    Soap: 'சோப்பு',
+    Noodles: 'நூடுல்ஸ்',
+    Corn: 'மக்காச்சோளம்',
+    Peanuts: 'நிலக்கடலை',
+    Tamarind: 'புளி',
+    ColdDrink: 'குளிர் பானம்',
+    Pickle: 'ஊறுகாய்',
+    Toothpaste: 'பற்பசை',
+    Ghee: 'நெய்',
+    Yogurt: 'தயிர்',
+    Papad: 'பப்படம்',
   },
 }
+
+// Items user can add by tapping (icon-based, no typing) - not in default 27
+export const EXTRA_ADDABLE_ITEMS = [
+  'Banana', 'Mango', 'Bread', 'Butter', 'Paneer',
+  'Asafoetida', 'CurryLeaves', 'Biscuits', 'Chicken',
+  'Coffee', 'Honey', 'Soap', 'Noodles', 'Corn', 'Peanuts',
+  'Tamarind', 'ColdDrink', 'Pickle', 'Toothpaste',
+  'Ghee', 'Yogurt', 'Papad',
+]
 
 export function getAccountLabel(accountKey, lang) {
   const key = accountKey?.trim() || ''
   const map = accountLabels[lang] || accountLabels.en
   return map[key] ?? key
+}
+
+// Roman transliteration of Tamil → account key (for "muttai" → Eggs, etc.)
+const ROMAN_TO_KEY = {
+  muttai: 'Eggs', arisi: 'Rice', ennai: 'Oil', paal: 'Milk', maavu: 'Flour',
+  sarkarai: 'Sugar', theneer: 'Tea', uppu: 'Salt', masalai: 'Spices',
+  inji: 'Ginger', poondu: 'Garlic', vengayam: 'Onion', thakkali: 'Tomato',
+  urulai: 'Potato', paruppu: 'Dal', thengai: 'Coconut', elumichai: 'Lemon',
+  vazhai: 'Banana', maambazham: 'Mango', maanga: 'Mango', rotti: 'Bread',
+  vennai: 'Butter', panner: 'Paneer', perungayam: 'Asafoetida',
+  karivepilai: 'CurryLeaves', kozhi: 'Chicken', kaapi: 'Coffee',
+  thean: 'Honey', soappu: 'Soap', puli: 'Tamarind', oorukai: 'Pickle',
+  parpasi: 'Toothpaste', neyi: 'Ghee', thayir: 'Yogurt', papadam: 'Papad',
+  meen: 'Fish', iraidhi: 'Meat', venkai: 'Onion', thakkali: 'Tomato',
+}
+
+export function getItemSuggestions(query, lang, limit = 8) {
+  const q = (query || '').trim().toLowerCase()
+  if (!q) return []
+  const map = accountLabels[lang] || accountLabels.en
+  const seen = new Set()
+  const results = []
+
+  // 1. Check Roman transliteration first (muttai → Eggs)
+  for (const [roman, key] of Object.entries(ROMAN_TO_KEY)) {
+    if (roman.includes(q) && !seen.has(key)) {
+      seen.add(key)
+      results.push({ key, label: map[key] || key })
+    }
+  }
+
+  // 2. Match English key and Tamil/English label
+  for (const [key, label] of Object.entries(map)) {
+    if (seen.has(key)) continue
+    if (key.toLowerCase().includes(q) || (label || '').toLowerCase().includes(q)) {
+      seen.add(key)
+      results.push({ key, label: label || key })
+    }
+  }
+
+  return results.slice(0, limit)
 }
 
 export function getAccountKeyFromLabel(label, lang) {
@@ -65,13 +175,20 @@ export function getAccountKeyFromLabel(label, lang) {
 const ACCOUNT_ICONS = {
   Eggs: '🥚', Vegetables: '🥬', Rice: '🍚', Oil: '🫒', Milk: '🥛',
   Flour: '🍞', Sugar: '🍬', Tea: '🍵', Salt: '🧂', Spices: '🌶️',
+  Ginger: '🫚', Garlic: '🧄', Onion: '🧅', Tomato: '🍅', Potato: '🥔',
+  Dal: '🫘', Coconut: '🥥', Lemon: '🍋',
+  Banana: '🍌', Mango: '🥭', Bread: '🍞', Butter: '🧈', Paneer: '🧀',
+  Asafoetida: '🌿', CurryLeaves: '🌿', Biscuits: '🍪', Chicken: '🥩',
+  Coffee: '☕', Honey: '🍯', Soap: '🧼', Noodles: '🍜', Corn: '🌽', Peanuts: '🥜',
+  Tamarind: '🌿', ColdDrink: '🥤', Pickle: '🫙', Toothpaste: '🪥',
+  Ghee: '🧈', Yogurt: '🥛', Papad: '🍘',
   Groceries: '🛒', Fruits: '🍎', Meat: '🥩', Fish: '🐟', Snacks: '🍿',
   Cash: '💵', Sales: '💰', Rent: '🏠', Other: '📦',
 }
 
 // Keywords (English/Tamil) → emoji for custom items shop owners add
 const ICON_KEYWORDS = [
-  ['masala', 'மசாலை', 'spice', 'chilli', 'chili', 'மிளகாய்', 'turmeric', 'மஞ்சள்', '🌶️'],
+  ['masala', 'மசாலா', 'spice', 'chilli', 'chili', 'மிளகாய்', 'turmeric', 'மஞ்சள்', '🌶️'],
   ['ginger', 'இஞ்சி', 'inji', '🫚'],
   ['garlic', 'பூண்டு', 'poondu', '🧄'],
   ['onion', 'வெங்காயம்', 'vengayam', '🧅'],
@@ -135,6 +252,7 @@ export const translations = {
     ledgerTapHint: 'Touch.',
     addEntry: 'Add Entry',
     addItem: 'Add Item',
+    addShort: 'Add',
     newItem: 'New',
     addItemHint: 'Add a new item to the list',
     enterNewItemName: 'Enter new item name',
@@ -161,7 +279,7 @@ export const translations = {
     pricePerUnitHint: 'Cost or sell price per single unit (egg, kg, piece)',
     dateHint: 'When did this happen? Pick any date.',
     particularsHint: 'Short description (e.g. Morning purchase)',
-    accountFormHint: 'What item? Use + to add new.',
+    accountFormHint: 'What item? Use + to add new. Long-press custom item to remove.',
     accountFormLabel: 'For what? (Tap to select)',
     formIntro: 'Pick item. Pick in or out. Enter amount.',
     formIntroQuick: 'Tap item, then amount.',
@@ -209,6 +327,8 @@ export const translations = {
     clearDataConfirm: 'Delete all entries and accounts? This cannot be undone.',
     deleteEntry: 'Delete',
     deleteConfirm: 'Delete this entry?',
+    removeItem: 'Remove item',
+    removeItemConfirm: 'Remove "{name}" and all its entries?',
     selectAll: 'Select All',
     clear: 'Clear',
     filter: 'Filter',
@@ -265,6 +385,7 @@ export const translations = {
     addEntry: 'பதிவு சேர்க்கவும்',
     addItem: 'புதிய பொருள்',
     newItem: 'புதியது',
+    addShort: 'சேர்',
     addItemHint: 'பட்டியலில் புதிய பொருளை சேர்க்கவும்',
     enterNewItemName: 'புதிய பொருளின் பெயரை உள்ளிடவும்',
     amount: 'தொகை ₹',
@@ -289,7 +410,7 @@ export const translations = {
     pricePerUnitHint: 'ஒரு முட்டை/கிலோ/துண்டு விலை',
     dateHint: 'எப்போது நடந்தது? ஏதேனும் தேதியைத் தேர்ந்தெடுக்கவும்.',
     particularsHint: 'சுருக்கமான விளக்கம் (எ.கா: காலை கொள்முதல்)',
-    accountFormHint: 'எந்த பொருள்? புதியதை சேர்க்க + அழுத்தவும்.',
+    accountFormHint: 'எந்த பொருள்? புதியதை சேர்க்க + அழுத்தவும். பொருளை நீக்க நீண்ட நேரம் அழுத்தவும்.',
     accountFormLabel: 'எதற்காக? (தேர்ந்தெடுக்கத் தொடவும்)',
     formIntro: 'பொருளைத் தேர்ந்தெடுக்கவும். வரவா செலவா தேர்ந்தெடுக்கவும். தொகையை உள்ளிடவும்.',
     formIntroQuick: 'பொருளைத் தொடவும், பின்னர் தொகையை உள்ளிடவும்.',
@@ -334,6 +455,8 @@ export const translations = {
     clearDataConfirm: 'எல்லா பதிவுகள் மற்றும் கணக்குகளையும் நீக்க விரும்புகிறீர்களா? இதை மாற்ற முடியாது.',
     deleteEntry: 'அழிக்கவும்',
     deleteConfirm: 'இந்த பதிவை அழிக்க விரும்புகிறீர்களா?',
+    removeItem: 'பொருளை நீக்கவும்',
+    removeItemConfirm: '"{name}" மற்றும் அதன் பதிவுகள் அனைத்தையும் நீக்கவா?',
     selectAll: 'அனைத்தையும் தேர்ந்தெடுக்கவும்',
     clear: 'அழிக்கவும்',
     filter: 'வடிகட்டு',

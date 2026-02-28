@@ -2,6 +2,7 @@ const STORAGE_KEY = 'small-business-pnl-v2'
 
 const DEFAULT_ACCOUNTS = [
   'Eggs', 'Vegetables', 'Rice', 'Oil', 'Milk', 'Flour', 'Sugar', 'Tea', 'Salt', 'Spices',
+  'Ginger', 'Garlic', 'Onion', 'Tomato', 'Potato', 'Dal', 'Coconut', 'Lemon',
   'Groceries', 'Fruits', 'Meat', 'Fish', 'Snacks', 'Cash', 'Sales', 'Rent', 'Other'
 ]
 
@@ -60,6 +61,16 @@ export function addAccount(name) {
   data.accounts.push(trimmed)
   saveStored(data)
   return trimmed
+}
+
+export function deleteAccount(name) {
+  const trimmed = (name || '').trim()
+  if (!trimmed) return
+  const data = getStored()
+  const lower = trimmed.toLowerCase()
+  data.accounts = data.accounts.filter(a => (a || '').toLowerCase() !== lower)
+  data.entries = data.entries.filter(e => (e.account || '').toLowerCase() !== lower)
+  saveStored(data)
 }
 
 export function getEntries(account = null) {

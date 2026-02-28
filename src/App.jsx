@@ -107,7 +107,19 @@ function App() {
         onLogout={logout}
       />
 
-      <main className="responsive-main" style={{ padding: '16px 20px calc(80px + env(safe-area-inset-bottom)) 20px', maxWidth: 480, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+      <main
+        className="responsive-main"
+        style={{
+          padding: '16px 20px calc(80px + env(safe-area-inset-bottom)) 20px',
+          paddingLeft: 'max(20px, env(safe-area-inset-left))',
+          paddingRight: 'max(20px, env(safe-area-inset-right))',
+          maxWidth: 480,
+          margin: '0 auto',
+          width: '100%',
+          minWidth: 0,
+          boxSizing: 'border-box',
+        }}
+      >
         {activeTab === 'home' && (
           <DashboardView
             t={t}
@@ -192,7 +204,7 @@ function App() {
         style={{
           position: 'fixed',
           bottom: 'calc(72px + env(safe-area-inset-bottom))',
-          right: 20,
+          right: 'max(20px, env(safe-area-inset-right))',
           width: 56,
           height: 56,
           borderRadius: 16,
@@ -219,10 +231,12 @@ function App() {
           right: 0,
           background: 'var(--white)',
           borderTop: '1px solid var(--gray-200)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
+          paddingLeft: 'env(safe-area-inset-left)',
+          paddingRight: 'env(safe-area-inset-right)',
           display: 'flex',
           justifyContent: 'space-around',
-          padding: '12px 0',
+          paddingTop: 12,
           zIndex: 50,
         }}
         className="nav-padding"
