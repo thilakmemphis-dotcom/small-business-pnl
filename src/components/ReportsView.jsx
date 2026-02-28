@@ -16,9 +16,10 @@ function formatPrice(n) {
   return v.toLocaleString('en-IN', { minimumFractionDigits: 1, maximumFractionDigits: 2 })
 }
 
-function formatDate(dateStr) {
+function formatDate(dateStr, lang = 'en') {
   const d = new Date(dateStr)
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })
+  const locale = lang === 'ta' ? 'ta-IN' : 'en-IN'
+  return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: '2-digit' })
 }
 
 export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
@@ -74,9 +75,10 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
     }
   }
 
+  const locale = lang === 'ta' ? 'ta-IN' : 'en-IN'
   const periodLabel = period === 'weekly'
-    ? `${formatDate(bounds.start)} – ${formatDate(bounds.end)}`
-    : new Date(bounds.start + 'T12:00:00').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+    ? `${formatDate(bounds.start, lang)} – ${formatDate(bounds.end, lang)}`
+    : new Date(bounds.start + 'T12:00:00').toLocaleDateString(locale, { month: 'long', year: 'numeric' })
 
   return (
     <section className="reports-view">
@@ -243,7 +245,7 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
                   color: 'var(--slate-700)',
                 }}
               >
-                {formatDate(date)}
+                {formatDate(date, lang)}
               </div>
               <ul style={{ listStyle: 'none' }}>
                 {dayEntries.map((e) => (

@@ -35,9 +35,10 @@ function formatPrice(n) {
   return v.toLocaleString('en-IN', { minimumFractionDigits: 1, maximumFractionDigits: 2 })
 }
 
-function formatDate(dateStr, t) {
+function formatDate(dateStr, lang = 'en') {
   const d = new Date(dateStr)
-  return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: '2-digit' })
+  const locale = lang === 'ta' ? 'ta-IN' : 'en-IN'
+  return d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short', year: '2-digit' })
 }
 
 export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, lang, accountToSelect, onAccountSelected }) {
@@ -73,7 +74,7 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
   }, [accountsWithEntries, selectedAccount])
 
   const addNewItem = () => {
-    const name = window.prompt(lang === 'ta' ? 'புதியது பேரு எழுது' : 'Enter new item name')
+    const name = window.prompt(t.enterNewItemName)
     if (name && name.trim()) {
       const added = addAccount(name.trim())
       if (added) {
@@ -85,7 +86,7 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
 
   const filteredEntries = useMemo(() => {
     return entries.filter(e => {
-      const d = formatDate(e.date, t)
+      const d = formatDate(e.date, lang)
       const part = (e.particulars || '').toString()
       const deb = e.debit != null ? formatNum(e.debit) : ''
       const cred = e.credit != null ? formatNum(e.credit) : ''
@@ -107,7 +108,7 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
     const credit = new Set()
     const balance = new Set()
     entries.forEach(e => {
-      date.add(formatDate(e.date, t))
+      date.add(formatDate(e.date, lang))
       particulars.add((e.particulars || '').toString())
       if (e.debit != null) debit.add(formatNum(e.debit))
       if (e.credit != null) credit.add(formatNum(e.credit))
@@ -400,7 +401,7 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                       }}
                       className="ledger-row"
                     >
-                      <td style={{ padding: '14px 12px', fontVariantNumeric: 'tabular-nums', fontSize: '0.85rem' }}>{formatDate(e.date, t)}</td>
+                      <td style={{ padding: '14px 12px', fontVariantNumeric: 'tabular-nums', fontSize: '0.85rem' }}>{formatDate(e.date, lang)}</td>
                       <td style={{ padding: '14px 12px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           <span

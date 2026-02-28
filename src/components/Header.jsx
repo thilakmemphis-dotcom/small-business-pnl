@@ -112,8 +112,8 @@ export default function Header({ title, lang, onLangToggle, user, onLogout }) {
             data-testid="logout"
             type="button"
             onClick={onLogout}
-            title={lang === 'ta' ? 'வெளியேறு' : 'Logout'}
-            aria-label={lang === 'ta' ? 'வெளியேறு' : 'Logout'}
+            title={lang === 'ta' ? 'வெளியேறுங்கள்' : 'Logout'}
+            aria-label={lang === 'ta' ? 'வெளியேறுங்கள்' : 'Logout'}
             className="header-logout-btn"
             style={{
               display: 'flex',
@@ -131,7 +131,7 @@ export default function Header({ title, lang, onLangToggle, user, onLogout }) {
             }}
           >
             <span style={{ fontSize: '1.1rem' }} aria-hidden="true">🚪</span>
-            <span className="header-logout-text">{lang === 'ta' ? 'வெளியேறு' : 'Logout'}</span>
+            <span className="header-logout-text">{lang === 'ta' ? 'வெளியேறுங்கள்' : 'Logout'}</span>
           </button>
         )}
         <div

@@ -9,24 +9,28 @@ const RED_LIGHT = '#fef2f2'
 const t = {
   welcome: { en: 'Welcome', ta: 'வரவேற்கிறோம்' },
   slogan: { en: 'Ledger Book: Simplify your kirana shop P&L', ta: 'கணக்கு புத்தகம்: உங்கள் கடை இலாப நட்டத்தை எளிதாக்குகிறது' },
-  login: { en: 'Login', ta: 'உள்நுழை' },
-  signup: { en: 'Sign up', ta: 'பதிவு செய்' },
+  login: { en: 'Login', ta: 'உள்நுழையுங்கள்' },
+  signup: { en: 'Sign up', ta: 'புதிய கணக்கை உருவாக்குங்கள்' },
   signInToContinue: { en: 'Sign in to your account', ta: 'உங்கள் கணக்கில் உள்நுழையுங்கள்' },
-  createAccount: { en: 'We need a few details to create your account', ta: 'கணக்கு உருவாக்க தேவையான விவரங்கள்' },
+  createAccount: { en: 'We need a few details to create your account', ta: 'கணக்கு உருவாக்கத் தேவையான விவரங்கள்' },
   email: { en: 'Email', ta: 'மின்னஞ்சல்' },
   password: { en: 'Password', ta: 'கடவுச்சொல்' },
   name: { en: 'Name', ta: 'பெயர்' },
-  back: { en: 'Back', ta: 'பின்செல்' },
-  switchToSignup: { en: "Don't have an account? Sign up", ta: 'கணக்கு இல்லையா? பதிவு செய்யுங்கள்' },
-  switchToLogin: { en: 'Already have an account? Login', ta: 'கணக்கு உள்ளதா? உள்நுழையுங்கள்' },
-  forgotPassword: { en: 'Forgot password?', ta: 'கடவுச்சொல் மறந்தீர்களா?' },
-  forgotTitle: { en: 'Reset password', ta: 'கடவுச்சொல் மீட்டமை' },
-  forgotSubtitle: { en: 'Enter your email to get a reset link', ta: 'மீட்டமை இணைப்பு பெற மின்னஞ்சலை உள்ளிடுக' },
-  checkEmail: { en: 'Check your email for the reset link', ta: 'மீட்டமை இணைப்பிற்கு மின்னஞ்சலை சரிபார்க்கவும்' },
+  back: { en: 'Back', ta: 'பின்செல்லவும்' },
+  switchToSignup: { en: "Don't have an account? Sign up", ta: 'புதிய கணக்கை உருவாக்குங்கள்' },
+  switchToLogin: { en: 'Already have an account? Login', ta: 'உங்களுக்கு ஏற்கனவே கணக்கு உள்ளதா?' },
+  forgotPassword: { en: 'Forgot password?', ta: 'கடவுச்சொல்லை மறந்துவிட்டீர்களா?' },
+  forgotTitle: { en: 'Reset password', ta: 'கடவுச்சொல்லை மீட்டமைக்கவும்' },
+  forgotSubtitle: { en: 'Enter your email to get a reset link', ta: 'மீட்டமை இணைப்பு பெற மின்னஞ்சலை உள்ளிடவும்' },
+  checkEmail: { en: 'Check your email for the reset link', ta: 'மீட்டமை இணைப்பிற்கு மின்னஞ்சலைச் சரிபார்க்கவும்' },
   resetTitle: { en: 'Set new password', ta: 'புதிய கடவுச்சொல்லை அமைக்கவும்' },
   newPassword: { en: 'New password', ta: 'புதிய கடவுச்சொல்' },
   confirmPassword: { en: 'Confirm password', ta: 'கடவுச்சொல்லை உறுதிப்படுத்தவும்' },
   resetSuccess: { en: 'Password updated! You can now login.', ta: 'கடவுச்சொல் மேம்படுத்தப்பட்டது! இப்போது உள்நுழையலாம்.' },
+  errorGeneric: { en: 'Something went wrong', ta: 'தவறு ஏற்பட்டுள்ளது.' },
+  passwordsNoMatch: { en: 'Passwords do not match', ta: 'கடவுச்சொற்கள் பொருந்தவில்லை.' },
+  emailRequired: { en: 'Email required', ta: 'மின்னஞ்சல் தேவை.' },
+  passwordMinLength: { en: 'Password must be at least 6 characters', ta: 'குறைந்தது 6 எழுத்துகள் தேவை.' },
 }
 
 export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggle, onLogin, onSignup }) {
@@ -71,7 +75,7 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
         }
       } else if (view === 'reset' && resetToken) {
         if (password !== confirmPassword) {
-          setError(lang === 'en' ? 'Passwords do not match' : 'கடவுச்சொற்கள் பொருந்தாது')
+          setError(tBoth('passwordsNoMatch'))
           setLoading(false)
           return
         }
@@ -83,7 +87,7 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
         setSuccess(tBoth('resetSuccess'))
       }
     } catch (err) {
-      setError(err.message || 'Something went wrong')
+      setError(err.message || tBoth('errorGeneric'))
     } finally {
       setLoading(false)
     }
@@ -364,7 +368,7 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
                 <p style={{ color: 'var(--green-700)', fontSize: '0.9rem', marginBottom: resetToken ? 12 : 0 }}>{success}</p>
                 {resetToken && (
                   <p style={{ color: 'var(--green-700)', fontSize: '0.85rem', marginTop: 8, marginBottom: 0 }}>
-                    {lang === 'en' ? 'Click the button below to set a new password.' : 'புதிய கடவுச்சொல்லை அமைக்க கீழே உள்ள பொத்தானை அழுத்துங்கள்.'}
+                    {lang === 'en' ? 'Click the button below to set a new password.' : 'புதிய கடவுச்சொல்லை அமைக்க கீழே உள்ள பொத்தானை அழுத்தவும்.'}
                   </p>
                 )}
               </div>
@@ -387,7 +391,7 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
                 </a>
               ) : (
                 <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 8 }}>
-                  {lang === 'en' ? "If you don't see an email, check spam or try signing up." : 'மின்னஞ்சல் இல்லையா? ஸ்பாம் சரிபார்க்கவும்.'}
+                  {lang === 'en' ? "If you don't see an email, check spam or try signing up." : 'மின்னஞ்சல் கிடைக்கவில்லையென்றால், ஸ்பாமைச் சரிபார்க்கவும் அல்லது புதிய கணக்கு உருவாக்க முயற்சிக்கவும்.'}
                 </p>
               )}
             </div>
@@ -397,7 +401,7 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
                 e.preventDefault()
                 const emailToUse = forgotEmailRef.current?.value?.trim() || email
                 if (!emailToUse) {
-                  setError(lang === 'en' ? 'Email required' : 'மின்னஞ்சல் தேவை')
+                  setError(tBoth('emailRequired'))
                   return
                 }
                 setError('')
@@ -433,7 +437,7 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
                 />
               </div>
               {error && <div style={{ marginBottom: 20, padding: 14, background: RED_LIGHT, color: 'var(--red-700)', borderRadius: 12, fontSize: '0.875rem', border: '1px solid #fecaca' }}>{error}</div>}
-              <button data-testid="auth-submit" type="submit" disabled={loading} style={{ width: '100%', padding: 16, background: `linear-gradient(135deg, ${ORANGE} 0%, ${RED} 100%)`, color: 'var(--white)', borderRadius: 14, fontWeight: 600, fontSize: '1rem', boxShadow: `0 4px 14px ${RED}40`, border: 'none' }}>{loading ? '…' : (lang === 'en' ? 'Send reset link' : 'மீட்டமை இணைப்பை அனுப்பு')}</button>
+              <button data-testid="auth-submit" type="submit" disabled={loading} style={{ width: '100%', padding: 16, background: `linear-gradient(135deg, ${ORANGE} 0%, ${RED} 100%)`, color: 'var(--white)', borderRadius: 14, fontWeight: 600, fontSize: '1rem', boxShadow: `0 4px 14px ${RED}40`, border: 'none' }}>{loading ? '…' : (lang === 'en' ? 'Send reset link' : 'மீட்டமை இணைப்பை அனுப்பவும்')}</button>
             </form>
           )}
         </div>
@@ -495,11 +499,11 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
               const pwd = resetPasswordRef.current?.value || ''
               const confirm = resetConfirmRef.current?.value || ''
               if (pwd !== confirm) {
-                setError(lang === 'en' ? 'Passwords do not match' : 'கடவுச்சொற்கள் பொருந்தாது')
+                setError(tBoth('passwordsNoMatch'))
                 return
               }
               if (pwd.length < 6) {
-                setError(lang === 'en' ? 'Password must be at least 6 characters' : 'குறைந்தது 6 எழுத்துகள் தேவை')
+                setError(tBoth('passwordMinLength'))
                 return
               }
               setError('')
@@ -511,7 +515,7 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
                 setView('login')
                 setSuccess(tBoth('resetSuccess'))
               } catch (err) {
-                setError(err.message || 'Something went wrong')
+                setError(err.message || tBoth('errorGeneric'))
               } finally {
                 setLoading(false)
               }
@@ -550,7 +554,7 @@ export default function AuthScreen({ mode: initialMode, lang = 'en', onLangToggl
             </div>
             {success && <div style={{ marginBottom: 20, padding: 14, background: '#ecfdf5', color: 'var(--green-700)', borderRadius: 12, fontSize: '0.875rem', border: '1px solid #a7f3d0' }}>{success}</div>}
             {error && <div style={{ marginBottom: 20, padding: 14, background: RED_LIGHT, color: 'var(--red-700)', borderRadius: 12, fontSize: '0.875rem', border: '1px solid #fecaca' }}>{error}</div>}
-            <button data-testid="auth-submit" type="submit" disabled={loading} style={{ width: '100%', padding: 16, background: `linear-gradient(135deg, ${ORANGE} 0%, ${RED} 100%)`, color: 'var(--white)', borderRadius: 14, fontWeight: 600, fontSize: '1rem', boxShadow: `0 4px 14px ${RED}40`, border: 'none' }}>{loading ? '…' : (lang === 'en' ? 'Reset password' : 'கடவுச்சொல் மீட்டமை')}</button>
+            <button data-testid="auth-submit" type="submit" disabled={loading} style={{ width: '100%', padding: 16, background: `linear-gradient(135deg, ${ORANGE} 0%, ${RED} 100%)`, color: 'var(--white)', borderRadius: 14, fontWeight: 600, fontSize: '1rem', boxShadow: `0 4px 14px ${RED}40`, border: 'none' }}>{loading ? '…' : (lang === 'en' ? 'Reset password' : 'கடவுச்சொல்லை மீட்டமைக்கவும்')}</button>
           </form>
         </div>
       </div>

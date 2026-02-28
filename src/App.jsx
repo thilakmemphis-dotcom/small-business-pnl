@@ -92,7 +92,7 @@ function App() {
           fontSize: '0.9rem',
         }}
       >
-        {lang === 'ta' ? 'லோட் செய்யுது…' : 'Loading…'}
+        {t.loading}
       </div>
     )
   }

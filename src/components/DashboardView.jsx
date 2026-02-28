@@ -29,17 +29,18 @@ function formatNum(n) {
   return Number(n).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
 }
 
-function timeAgo(dateStr) {
+function timeAgo(dateStr, t, lang = 'en') {
   const d = new Date(dateStr)
   const now = new Date()
   const diffMs = now - d
   const diffHrs = Math.floor(diffMs / (1000 * 60 * 60))
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  if (diffHrs < 1) return 'Just now'
-  if (diffHrs < 24) return `${diffHrs} hours ago`
-  if (diffDays === 1) return '1 day ago'
-  if (diffDays < 7) return `${diffDays} days ago`
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+  const locale = lang === 'ta' ? 'ta-IN' : 'en-IN'
+  if (diffHrs < 1) return t.justNow || 'Just now'
+  if (diffHrs < 24) return `${diffHrs} ${t.hoursAgo || 'hours ago'}`
+  if (diffDays === 1) return t.oneDayAgo || '1 day ago'
+  if (diffDays < 7) return `${diffDays} ${t.daysAgo || 'days ago'}`
+  return d.toLocaleDateString(locale, { day: 'numeric', month: 'short' })
 }
 
 export default function DashboardView({
@@ -217,7 +218,7 @@ export default function DashboardView({
                   {acc.label}
                 </div>
                 <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 2 }}>
-                  {acc.lastDate ? timeAgo(acc.lastDate) : ''}
+                  {acc.lastDate ? timeAgo(acc.lastDate, t, lang) : ''}
                 </div>
               </div>
               <div
