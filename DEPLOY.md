@@ -1,18 +1,32 @@
 # Ledger Book – Deployment Guide
 
-This guide explains how to deploy Ledger Book. Choose one of the two options below.
+This guide explains how to deploy Ledger Book. Choose one of three options below.
+
+---
+
+## Which URL do I share with users?
+
+| Option | Share this URL |
+|--------|----------------|
+| **Option A (Vercel + Supabase)** | Your Vercel URL |
+| **Option B (Render + Postgres)** | Your Render Web Service URL |
+| **Option C (Vercel + Render split)** | Your **Vercel** URL only (frontend) |
+
+**Do not share:** Render dashboard links, "Deployments" tab, or "View deployment" – those show build logs, not the app.
 
 ---
 
 ## Which option should I use?
 
-| | **Option A: Vercel + Supabase** | **Option B: Render + Postgres** |
-|---|---|---|
-| **Login/Signup** | No (anonymous only) | Yes (email + password) |
-| **Password reset** | No | Yes |
-| **Data** | Per device/browser | Per user account (synced) |
-| **Platforms** | Vercel + Supabase | Render only |
-| **Complexity** | Easier | Slightly more setup |
+| | **Option A: Vercel + Supabase** | **Option B: Render only** | **Option C: Vercel + Render split** |
+|---|---|---|---|
+| **Login/Signup** | No (anonymous) | Yes | Yes |
+| **Password reset** | No | Yes | Yes |
+| **Data** | Per device | Per user (synced) | Per user (synced) |
+| **Frontend** | Vercel | Render (Docker) | Vercel |
+| **Backend** | Supabase | Render (Docker) | Render (Docker) |
+| **Share URL** | Vercel | Render | **Vercel** |
+| **Complexity** | Easiest | Medium | Medium |
 
 ---
 
@@ -195,12 +209,16 @@ Render will use the project's `Dockerfile` to build (frontend + Python API) and 
 
 ---
 
-## Step 8: Test
+## Step 8: Test and get your shareable URL
 
-1. Open your Render URL.
-2. You should see the **Welcome** screen with **Login** and **Sign up**.
-3. Click **Sign up**, create an account, and add a ledger entry.
-4. Refresh – the entry should still be there (stored in Postgres).
+1. In the Render dashboard, open your **ledger-book** Web Service.
+2. **Copy the live URL** from the top (e.g. `https://ledger-book-xxxx.onrender.com`). This is the URL you share with users.
+3. **Do NOT** use links like "View deployment" or "Deployments" – those show build logs, not the app.
+4. Open your live URL in a browser. You should see the **Welcome** screen with **Login** and **Sign up**.
+5. Click **Sign up**, create an account, and add a ledger entry.
+6. Refresh – the entry should still be there (stored in Postgres).
+
+**If you see a "deployment" or placeholder page instead of the app:** Make sure you created a **Web Service** (Docker), not a Static Site. Static Site will not run the API or serve the app correctly. Delete and recreate as Web Service with Environment = Docker.
 
 ---
 
@@ -216,6 +234,146 @@ Render will use the project's `Dockerfile` to build (frontend + Python API) and 
 | 6 | Added `DATABASE_URL`, `JWT_SECRET`, `PORT`, `APP_URL`, `VITE_API_URL` |
 | 7 | Deployed and got the app URL |
 | 8 | Tested login/signup and ledger data |
+
+---
+
+# Option C: Vercel (frontend) + Render (backend)
+
+Use this if you want the frontend on Vercel and the backend on Render. Users visit the Vercel URL; the app calls the Render API in the background.
+
+---
+
+## Already deployed on Render?
+
+If you already have a Web Service on Render:
+
+1. Open your service → **Settings** → **Build & Deploy**
+2. Find **Dockerfile Path** and set it to `Dockerfile.api`
+3. Click **Save Changes** – Render will redeploy with API only (no frontend build)
+4. Then follow **Part 2** below to deploy the frontend on Vercel
+
+---
+
+## Part 1: Deploy the backend on Render
+
+### Step 1: Create a PostgreSQL database on Render
+
+1. Go to [render.com](https://render.com) and sign in with GitHub.
+2. Click **New +** → **PostgreSQL**.
+3. Name it **ledger-book-db**, choose a region, click **Create Database**.
+4. Wait for it to be ready.
+5. Copy the **Internal Database URL** (starts with `postgresql://`).
+
+---
+
+### Step 2: Create a Web Service on Render (backend only)
+
+1. Click **New +** → **Web Service**.
+2. Connect and select your **small-business-pnl** repo.
+3. Configure:
+
+   | Field | Value |
+   |-------|-------|
+   | **Name** | ledger-book-api |
+   | **Region** | Same as your database |
+   | **Environment** | Docker |
+   | **Dockerfile Path** | `Dockerfile.api` |
+   | **Instance Type** | Free |
+
+   **Dockerfile Path:** Under **Advanced** settings, set to `Dockerfile.api` so Render builds only the API (no frontend). This is faster and lighter. If you don't see it, you can add it later in **Settings** → **Docker**.
+
+---
+
+### Step 3: Add environment variables on Render
+
+In the Web Service → **Environment**, add:
+
+| Key | Value |
+|-----|-------|
+| `DATABASE_URL` | Your Internal Database URL from Step 1 |
+| `JWT_SECRET` | Run `openssl rand -hex 32` in terminal, paste the output |
+| `PORT` | `3001` |
+| `APP_URL` | Leave empty for now – you’ll add your Vercel URL after Part 2 |
+
+**Note:** Do **not** add `VITE_API_URL` here – that goes on Vercel.
+
+---
+
+### Step 4: Deploy the backend
+
+1. Click **Create Web Service**.
+2. Wait 3–5 minutes for the build to finish.
+3. Copy your **Render live URL** (e.g. `https://ledger-book-api-xxxx.onrender.com`). You’ll need it for Vercel.
+
+---
+
+## Part 2: Deploy the frontend on Vercel
+
+### Step 5: Deploy on Vercel
+
+1. Go to [vercel.com](https://vercel.com) and sign in with GitHub.
+2. Click **Add New…** → **Project**.
+3. Import your **small-business-pnl** repo.
+4. Project settings:
+   - **Framework Preset:** Vite
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+
+---
+
+### Step 6: Add environment variables on Vercel
+
+In **Settings** → **Environment Variables**, add:
+
+| Name | Value |
+|------|-------|
+| `VITE_API_URL` | Your **Render backend URL** from Step 4 (e.g. `https://ledger-book-api-xxxx.onrender.com`) |
+
+**Important:** Do **not** add `VITE_SUPABASE_URL` or `VITE_SUPABASE_ANON_KEY` for Option C.
+
+---
+
+### Step 7: Deploy
+
+1. Click **Deploy** (or trigger a redeploy).
+2. Wait 1–2 minutes.
+3. Copy your **Vercel URL** (e.g. `https://small-business-pnl.vercel.app`).
+
+---
+
+## Part 3: Connect frontend and backend
+
+### Step 8: Update Render with the Vercel URL (CORS)
+
+1. Go back to Render → your **ledger-book-api** Web Service.
+2. Open **Environment**.
+3. Add or update:
+   | Key | Value |
+   |-----|-------|
+   | `APP_URL` | Your **Vercel URL** from Step 7 |
+4. Click **Save Changes**. Render will redeploy automatically (about 1–2 minutes).
+
+---
+
+### Step 9: Test
+
+1. Open your **Vercel URL** in a browser.
+2. You should see the **Welcome** screen with **Login** and **Sign up**.
+3. Click **Sign up**, create an account, and add a ledger entry.
+4. Refresh – the entry should persist (stored in Postgres on Render).
+
+---
+
+## Summary – Option C
+
+| Step | What you did |
+|------|--------------|
+| 1–4 | Created Render Postgres and Web Service (backend) |
+| 5–7 | Deployed frontend on Vercel with `VITE_API_URL` = Render URL |
+| 8 | Set `APP_URL` on Render = Vercel URL (for CORS) |
+| 9 | Tested the app |
+
+**Share with users:** Your **Vercel** URL only.
 
 ---
 
@@ -238,15 +396,27 @@ Render will use the project's `Dockerfile` to build (frontend + Python API) and 
 | Login works but data not saving | Verify `DATABASE_URL` and that the database is running. |
 | Free tier sleeps | On Free tier, the app may sleep after inactivity. First load can take ~30 seconds. |
 
+## Option C (Vercel + Render split)
+
+| Problem | Fix |
+|--------|-----|
+| "Failed to fetch" or CORS error | Add `APP_URL` on Render = your exact Vercel URL. Redeploy Render. |
+| Blank page or login doesn't work | Check `VITE_API_URL` on Vercel points to your Render URL. Redeploy Vercel. |
+| Login works but data not saving | Check `DATABASE_URL` on Render and that the database is running. |
+| Render backend sleeps (Free tier) | First API call after idle can take ~30 seconds. Consider upgrading for production. |
+
 ---
 
 # Environment variables quick reference
 
-| Variable | Option A (Supabase) | Option B (Render) |
-|----------|--------------------|-------------------|
-| `VITE_SUPABASE_URL` | ✅ Required | ❌ Not used |
-| `VITE_SUPABASE_ANON_KEY` | ✅ Required | ❌ Not used |
-| `VITE_API_URL` | ❌ Do not set | ✅ Your Render URL |
-| `DATABASE_URL` | ❌ Not used | ✅ From Render Postgres |
-| `JWT_SECRET` | ❌ Not used | ✅ Random string |
-| `APP_URL` | ❌ Not used | ✅ Your Render URL |
+| Variable | Option A | Option B | Option C |
+|----------|----------|----------|----------|
+| **Vercel** | | | |
+| `VITE_SUPABASE_URL` | ✅ Required | ❌ | ❌ |
+| `VITE_SUPABASE_ANON_KEY` | ✅ Required | ❌ | ❌ |
+| `VITE_API_URL` | ❌ | ❌ | ✅ Render backend URL |
+| **Render** | | | |
+| `DATABASE_URL` | ❌ | ✅ From Postgres | ✅ From Postgres |
+| `JWT_SECRET` | ❌ | ✅ Random | ✅ Random |
+| `APP_URL` | ❌ | ✅ Render URL | ✅ Vercel URL |
+| `VITE_API_URL` | ❌ | ✅ (optional) | ❌ Not needed |

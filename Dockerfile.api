@@ -1,0 +1,18 @@
+# API-only image for Render (when frontend is on Vercel)
+# Lighter build - no Node or frontend compilation
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy Python server only
+COPY server ./server
+
+ENV PORT=3001
+EXPOSE 3001
+
+CMD ["sh", "-c", "uvicorn server.main:app --host 0.0.0.0 --port ${PORT:-3001}"]

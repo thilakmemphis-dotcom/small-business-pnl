@@ -1,0 +1,26 @@
+# Render Blueprint - Option B (Render + Postgres)
+# Use this for full auth (login, signup, password reset)
+#
+# IMPORTANT: This creates a WEB SERVICE (Docker), NOT a Static Site.
+# After deploy, your LIVE APP URL is shown in the service (e.g. https://ledger-book-xxxx.onrender.com)
+# Share that URL with users - do NOT share the Render dashboard or "Deployments" tab links.
+
+services:
+  - type: web
+    name: ledger-book
+    env: docker
+    region: oregon
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ledger-book-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 3001
+    # After first deploy, add APP_URL and VITE_API_URL = your live URL, then redeploy
+
+databases:
+  - name: ledger-book-db
+    region: oregon
