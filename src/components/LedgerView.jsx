@@ -1,17 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useLedger } from '../context/LedgerContext'
 import { getSummaryForPeriod } from '../storage'
-import { getAccountLabel, getAccountKeyFromLabel } from '../i18n'
-
-const ACCOUNT_ICONS = {
-  Eggs: '🥚', Vegetables: '🥬', Rice: '🍚', Oil: '🫒', Milk: '🥛',
-  Flour: '🍞', Sugar: '🍬', Tea: '🍵', Salt: '🧂', Spices: '🌶️',
-  Groceries: '🛒', Fruits: '🍎', Meat: '🥩', Fish: '🐟', Snacks: '🍿',
-  Cash: '💵', Sales: '💰', Rent: '🏠', Other: '📦',
-}
-function getAccountIcon(key) {
-  return ACCOUNT_ICONS[key] || '📋'
-}
+import { getAccountLabel, getAccountKeyFromLabel, getAccountIcon } from '../i18n'
 
 function getEntriesWithBalance(entries, account) {
   const filtered = entries.filter(e => e.account?.toLowerCase() === account?.toLowerCase())

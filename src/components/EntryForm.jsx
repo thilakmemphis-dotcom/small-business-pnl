@@ -1,16 +1,6 @@
 import { useState } from 'react'
 import { getAccounts, addAccount } from '../storage'
-import { getAccountLabel } from '../i18n'
-
-const ACCOUNT_ICONS = {
-  Eggs: '🥚', Vegetables: '🥬', Rice: '🍚', Oil: '🫒', Milk: '🥛',
-  Flour: '🍞', Sugar: '🍬', Tea: '🍵', Salt: '🧂', Spices: '🌶️',
-  Groceries: '🛒', Fruits: '🍎', Meat: '🥩', Fish: '🐟', Snacks: '🍿',
-  Cash: '💵', Sales: '💰', Rent: '🏠', Other: '📦',
-}
-function getAccountIcon(key) {
-  return ACCOUNT_ICONS[key] || '📋'
-}
+import { getAccountLabel, getAccountIcon } from '../i18n'
 
 function formatNum(n) {
   return Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })

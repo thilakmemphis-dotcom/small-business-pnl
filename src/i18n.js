@@ -62,6 +62,57 @@ export function getAccountKeyFromLabel(label, lang) {
   return lbl
 }
 
+const ACCOUNT_ICONS = {
+  Eggs: '🥚', Vegetables: '🥬', Rice: '🍚', Oil: '🫒', Milk: '🥛',
+  Flour: '🍞', Sugar: '🍬', Tea: '🍵', Salt: '🧂', Spices: '🌶️',
+  Groceries: '🛒', Fruits: '🍎', Meat: '🥩', Fish: '🐟', Snacks: '🍿',
+  Cash: '💵', Sales: '💰', Rent: '🏠', Other: '📦',
+}
+
+// Keywords (English/Tamil) → emoji for custom items shop owners add
+const ICON_KEYWORDS = [
+  ['masala', 'மசாலை', 'spice', 'chilli', 'chili', 'மிளகாய்', 'turmeric', 'மஞ்சள்', '🌶️'],
+  ['ginger', 'இஞ்சி', 'inji', '🫚'],
+  ['garlic', 'பூண்டு', 'poondu', '🧄'],
+  ['onion', 'வெங்காயம்', 'vengayam', '🧅'],
+  ['tomato', 'தக்காளி', 'thakkali', '🍅'],
+  ['potato', 'உருளை', 'aloo', 'urulaikilangu', '🥔'],
+  ['coconut', 'தேங்காய்', 'thengai', '🥥'],
+  ['lemon', 'எலுமிச்சை', 'elumichai', 'lime', 'nimboo', '🍋'],
+  ['banana', 'வாழை', 'vazhai', '🍌'],
+  ['mango', 'மாம்பழம்', 'maanga', '🥭'],
+  ['dal', 'பருப்பு', 'paruppu', 'lentil', '🫘'],
+  ['coriander', 'கொத்தமல்லி', 'kothamalli', 'curry leaves', 'கறிவேப்பிலை', 'karivepilai', '🌿'],
+  ['egg', 'முட்டை', 'muttai', '🥚'],
+  ['vegetable', 'காய்கறி', 'kayakarai', '🥬'],
+  ['rice', 'அரிசி', 'arisi', '🍚'],
+  ['oil', 'எண்ணெய்', 'ennai', '🫒'],
+  ['milk', 'பால்', 'paal', '🥛'],
+  ['flour', 'மாவு', 'maavu', 'atta', '🍞'],
+  ['sugar', 'சர்க்கரை', 'sarkarai', '🍬'],
+  ['tea', 'தேநீர்', 'theneer', '🍵'],
+  ['salt', 'உப்பு', 'uppu', '🧂'],
+  ['fish', 'மீன்', 'meen', '🐟'],
+  ['meat', 'இறைச்சி', 'iraichi', 'chicken', 'கோழி', 'kozhi', '🥩'],
+  ['fruit', 'பழம்', 'pazham', '🍎'],
+  ['snack', 'ஸ்னாக்ஸ்', '🍿'],
+  ['bread', 'ரொட்டி', 'rotti', '🍞'],
+  ['butter', 'வெண்ணெய்', 'vennai', '🧈'],
+  ['paneer', 'பன்னீர்', 'cottage', '🧀'],
+]
+
+export function getAccountIcon(accountKey) {
+  const key = (accountKey || '').trim()
+  if (ACCOUNT_ICONS[key]) return ACCOUNT_ICONS[key]
+  const lower = key.toLowerCase()
+  for (const row of ICON_KEYWORDS) {
+    const emoji = row[row.length - 1]
+    const keywords = row.slice(0, -1)
+    if (keywords.some((k) => lower.includes(String(k).toLowerCase()))) return emoji
+  }
+  return '📋'
+}
+
 export const translations = {
   en: {
     appName: 'Ledger Book',

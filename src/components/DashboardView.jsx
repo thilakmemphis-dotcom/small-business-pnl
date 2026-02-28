@@ -1,16 +1,6 @@
 import { useMemo } from 'react'
 import { useLedger } from '../context/LedgerContext'
-import { getAccountLabel } from '../i18n'
-
-const ACCOUNT_ICONS = {
-  Eggs: '🥚', Vegetables: '🥬', Rice: '🍚', Oil: '🫒', Milk: '🥛',
-  Flour: '🍞', Sugar: '🍬', Tea: '🍵', Salt: '🧂', Spices: '🌶️',
-  Groceries: '🛒', Fruits: '🍎', Meat: '🥩', Fish: '🐟', Snacks: '🍿',
-  Cash: '💵', Sales: '💰', Rent: '🏠', Other: '📦',
-}
-function getAccountIcon(key) {
-  return ACCOUNT_ICONS[key] || '📋'
-}
+import { getAccountLabel, getAccountIcon } from '../i18n'
 
 function getBalanceForAccount(entries, account) {
   return entries
