@@ -9,6 +9,13 @@ const DEFAULT_ACCOUNTS = [
   'Groceries', 'Fruits', 'Meat', 'Fish', 'Snacks', 'Cash', 'Sales', 'Rent', 'Other',
 ]
 
+function mergeWithDefaults(apiAccounts) {
+  if (!Array.isArray(apiAccounts) || apiAccounts.length === 0) return [...DEFAULT_ACCOUNTS]
+  const defSet = new Set(DEFAULT_ACCOUNTS.map((a) => a.toLowerCase()))
+  const custom = apiAccounts.filter((a) => a && !defSet.has((a || '').toLowerCase()))
+  return [...DEFAULT_ACCOUNTS, ...custom]
+}
+
 const LedgerContext = createContext(null)
 
 export function LedgerProvider({ children }) {
@@ -31,7 +38,7 @@ export function LedgerProvider({ children }) {
       try {
         const data = await api.fetchLedger()
         setUseDb(true)
-        setAccounts(Array.isArray(data?.accounts) ? data.accounts : DEFAULT_ACCOUNTS)
+        setAccounts(mergeWithDefaults(data?.accounts))
         setEntries(Array.isArray(data?.entries) ? data.entries : [])
       } catch (_) {
         const data = storage.getStored()
@@ -75,7 +82,7 @@ export function LedgerProvider({ children }) {
 
         setUseDb(true)
         if (row) {
-          setAccounts(Array.isArray(row.accounts) ? row.accounts : DEFAULT_ACCOUNTS)
+          setAccounts(mergeWithDefaults(row.accounts))
           setEntries(Array.isArray(row.entries) ? row.entries : [])
         } else {
           await supabase.from('ledger_data').insert({
