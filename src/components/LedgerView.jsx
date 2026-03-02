@@ -160,7 +160,7 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
           style={{
             padding: '4px 6px',
             borderRadius: 4,
-            background: active ? 'var(--teal-100)' : 'transparent',
+            background: active ? 'var(--gray-200)' : 'transparent',
             border: '1px solid transparent',
             cursor: 'help',
             fontSize: '0.85rem',
@@ -235,8 +235,8 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
   return (
     <section className="ledger-view">
       {/* Visual tap grid - no typing needed */}
-      <div style={{ marginBottom: 20 }}>
-        <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--slate-700)', marginBottom: 12 }}>
+      <div style={{ marginBottom: 24 }}>
+        <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--slate-700)', marginBottom: 14 }}>
           {accountsWithEntries.length === 0
             ? t.ledgerEmptyHint
             : t.ledgerTapPrompt}
@@ -246,7 +246,7 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 10,
+            gap: 12,
           }}
         >
           {accountsWithEntries.map((acc) => (
@@ -258,8 +258,8 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: 6,
-                  padding: '14px 8px',
+                  gap: 8,
+                  padding: '16px 10px',
                   borderRadius: 'var(--radius-md)',
                   background: selectedAccount === acc ? '#2563eb' : 'var(--white)',
                   color: selectedAccount === acc ? 'var(--white)' : 'var(--slate-800)',
@@ -316,7 +316,7 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: 12,
-              marginBottom: 12,
+              marginBottom: 16,
               flexWrap: 'wrap',
             }}
           >
@@ -344,7 +344,7 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
               </button>
             )}
           </div>
-          <div style={{ overflowX: 'auto', marginBottom: 12, WebkitOverflowScrolling: 'touch' }}>
+          <div style={{ overflowX: 'auto', marginBottom: 16, WebkitOverflowScrolling: 'touch' }}>
             <table
               className="ledger-table-font"
               style={{
@@ -358,12 +358,12 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                 <tr>
                   <th
                     style={{
-                      padding: '14px 12px',
-                      background: 'var(--slate-100)',
+                      padding: '18px 16px',
+                      background: 'var(--gray-50)',
                       fontWeight: 600,
                       fontSize: '0.8125rem',
-                      color: 'var(--slate-700)',
-                      borderBottom: '2px solid var(--gray-200)',
+                      color: 'var(--slate-600)',
+                      borderBottom: '1px solid var(--gray-200)',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 4 }}>
@@ -373,12 +373,12 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                   </th>
                   <th
                     style={{
-                      padding: '14px 12px',
-                      background: 'var(--slate-100)',
+                      padding: '18px 16px',
+                      background: 'var(--gray-50)',
                       fontWeight: 600,
                       fontSize: '0.8125rem',
-                      color: 'var(--slate-700)',
-                      borderBottom: '2px solid var(--gray-200)',
+                      color: 'var(--slate-600)',
+                      borderBottom: '1px solid var(--gray-200)',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 4 }}>
@@ -388,46 +388,44 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                   </th>
                   <th
                     style={{
-                      padding: '14px 12px',
-                      background: 'var(--slate-100)',
+                      padding: '18px 16px',
+                      background: 'var(--gray-50)',
                       fontWeight: 600,
                       fontSize: '0.8125rem',
-                      color: 'var(--slate-700)',
-                      borderBottom: '2px solid var(--gray-200)',
+                      color: 'var(--slate-600)',
+                      borderBottom: '1px solid var(--gray-200)',
                     }}
                     title={t.debitHint}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                      <span aria-hidden="true">💸</span>
                       <span>{t.outShort || t.debit}</span>
                       <FilterDropdown col="debit" />
                     </div>
                   </th>
                   <th
                     style={{
-                      padding: '14px 12px',
-                      background: 'var(--slate-100)',
+                      padding: '18px 16px',
+                      background: 'var(--gray-50)',
                       fontWeight: 600,
                       fontSize: '0.8125rem',
-                      color: 'var(--slate-700)',
-                      borderBottom: '2px solid var(--gray-200)',
+                      color: 'var(--slate-600)',
+                      borderBottom: '1px solid var(--gray-200)',
                     }}
                     title={t.creditHint}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                      <span aria-hidden="true">💰</span>
                       <span>{t.inShort || t.credit}</span>
                       <FilterDropdown col="credit" />
                     </div>
                   </th>
                   <th
                     style={{
-                      padding: '14px 12px',
-                      background: 'var(--slate-100)',
+                      padding: '18px 16px',
+                      background: 'var(--gray-50)',
                       fontWeight: 600,
                       fontSize: '0.8125rem',
-                      color: 'var(--slate-700)',
-                      borderBottom: '2px solid var(--gray-200)',
+                      color: 'var(--slate-600)',
+                      borderBottom: '1px solid var(--gray-200)',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
@@ -435,7 +433,7 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                       <FilterDropdown col="balance" />
                     </div>
                   </th>
-                  <th style={{ width: 48, padding: '14px 8px', background: 'var(--slate-100)', borderBottom: '2px solid var(--gray-200)' }} />
+                  <th style={{ width: 48, padding: '18px 8px', background: 'var(--gray-50)', borderBottom: '1px solid var(--gray-200)' }} />
                 </tr>
               </thead>
               <tbody>
@@ -456,65 +454,62 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                       }}
                       className="ledger-row"
                     >
-                      <td style={{ padding: '14px 12px', fontVariantNumeric: 'tabular-nums', fontSize: '0.85rem' }}>{formatDate(e.date, lang)}</td>
-                      <td style={{ padding: '14px 12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                          <span
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              padding: '2px 8px',
-                              borderRadius: 6,
-                              fontSize: '0.7rem',
-                              fontWeight: 600,
-                              flexShrink: 0,
-                              background: e.debit ? 'var(--red-50)' : 'var(--green-50)',
-                              color: e.debit ? 'var(--red-700)' : 'var(--green-700)',
-                            }}
-                          >
-                            {e.debit ? `💸 ${t.outShort}` : `💰 ${t.inShort}`}
-                          </span>
-                          <span>{e.particulars}</span>
-                          {e.party && (
-                            <span
-                              style={{
-                                display: 'inline-flex',
-                                padding: '2px 6px',
-                                borderRadius: 4,
-                                fontSize: '0.65rem',
-                                fontWeight: 600,
-                                background: 'var(--teal-100)',
-                                color: 'var(--teal-700)',
-                              }}
-                            >
-                              {e.party}
-                            </span>
+                      <td style={{ padding: '18px 16px', fontVariantNumeric: 'tabular-nums', fontSize: '0.75rem', color: 'var(--gray-600)' }}>{formatDate(e.date, lang)}</td>
+                      <td style={{ padding: '18px 16px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            {e.party ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, color: 'var(--slate-900)' }}>
+                                <span
+                                  style={{
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: '50%',
+                                    background: 'var(--gray-400)',
+                                    flexShrink: 0,
+                                  }}
+                                  aria-hidden
+                                />
+                                {e.party}
+                              </span>
+                            ) : null}
+                            <span style={{ fontSize: '0.875rem', color: 'var(--slate-700)' }}>{e.particulars}</span>
+                          </div>
+                          {e.qty != null && e.price != null && (
+                            <div style={{ fontSize: '0.8rem', color: 'var(--gray-500)' }}>
+                              {Math.floor(e.qty).toLocaleString('en-IN')} × {(e.unitsPerTray || 1)} × ₹{formatPrice(e.price)} = ₹{formatNum(e.debit || e.credit)}
+                            </div>
                           )}
                         </div>
-                        {e.qty != null && e.price != null && (
-                          <div style={{ fontSize: '0.8rem', color: 'var(--gray-600)', marginTop: 4 }}>
-                            {Math.floor(e.qty).toLocaleString('en-IN')} × {(e.unitsPerTray || 1)} × ₹{formatPrice(e.price)} = ₹{formatNum(e.debit || e.credit)}
-                          </div>
-                        )}
                       </td>
-                      <td style={{ textAlign: 'right', padding: '14px 12px', color: e.debit ? 'var(--red-600)' : undefined, fontVariantNumeric: 'tabular-nums' }}>
+                      <td style={{ textAlign: 'right', padding: '18px 16px', color: e.debit ? 'var(--red-600)' : undefined, fontVariantNumeric: 'tabular-nums', fontSize: '1.25rem', fontWeight: 700 }}>
                         {e.debit ? `₹${formatNum(e.debit)}` : '—'}
                       </td>
-                      <td style={{ textAlign: 'right', padding: '14px 12px', color: e.credit ? 'var(--green-600)' : undefined, fontVariantNumeric: 'tabular-nums' }}>
+                      <td style={{ textAlign: 'right', padding: '18px 16px', color: e.credit ? 'var(--green-600)' : undefined, fontVariantNumeric: 'tabular-nums', fontSize: '1.25rem', fontWeight: 700 }}>
                         {e.credit ? `₹${formatNum(e.credit)}` : '—'}
                       </td>
                       <td
                         style={{
                           textAlign: 'right',
-                          padding: '14px 12px',
-                          fontWeight: 600,
+                          padding: '18px 16px',
+                          fontWeight: 700,
+                          fontSize: '1.2rem',
                           fontVariantNumeric: 'tabular-nums',
                           color: (e.balance ?? 0) >= 0 ? 'var(--green-600)' : 'var(--red-600)',
                         }}
                       >
-                        ₹{formatNum(e.balance)}
+                        {(e.balance ?? 0) >= 0 ? (
+                          <>₹{formatNum(e.balance)}</>
+                        ) : (
+                          <>
+                            ₹{formatNum(Math.abs(e.balance))}
+                            <span style={{ fontSize: '0.75rem', fontWeight: 500, opacity: 0.9, marginLeft: 4 }}>
+                              ({t.balancePending})
+                            </span>
+                          </>
+                        )}
                       </td>
-                      <td style={{ padding: '10px 8px' }}>
+                      <td style={{ padding: '14px 12px' }}>
                         <button
                           type="button"
                           onClick={() => handleDelete(e.id)}
@@ -543,26 +538,26 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr 1fr',
-              gap: 16,
-              padding: 20,
+              gap: 20,
+              padding: 24,
               background: 'var(--white)',
               borderRadius: 'var(--radius-md)',
               boxShadow: 'var(--shadow-sm)',
               border: '1px solid var(--gray-200)',
-              marginBottom: 20,
+              marginBottom: 24,
             }}
           >
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--gray-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.totalIncome}</div>
-              <div style={{ fontWeight: 700, color: 'var(--green-600)' }}>₹{formatNum(summary.income)}</div>
+              <div style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--green-600)' }}>₹{formatNum(summary.income)}</div>
             </div>
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--gray-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.totalExpense}</div>
-              <div style={{ fontWeight: 700, color: 'var(--red-600)' }}>₹{formatNum(summary.expense)}</div>
+              <div style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--red-600)' }}>₹{formatNum(summary.expense)}</div>
             </div>
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--gray-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.net}</div>
-              <div style={{ fontWeight: 700, color: summary.net >= 0 ? 'var(--green-600)' : 'var(--red-600)' }}>₹{formatNum(summary.net)}</div>
+              <div style={{ fontWeight: 700, fontSize: '1.2rem', color: summary.net >= 0 ? 'var(--green-600)' : 'var(--red-600)' }}>₹{formatNum(summary.net)}</div>
             </div>
           </div>
         </>

@@ -5,7 +5,6 @@ import {
   getWeekBounds,
   getMonthBounds,
 } from '../storage'
-import { getAccountLabel } from '../i18n'
 
 function formatNum(n) {
   return Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -50,6 +49,24 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
     })
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   }, [entries])
+
+  /** Group day entries by party; each group has { party, totalOut, totalIn, net } */
+  const groupByParty = (dayEntries) => {
+    const byParty = new Map()
+    dayEntries.forEach(e => {
+      const key = (e.party || '').trim() || '__none__'
+      if (!byParty.has(key)) {
+        byParty.set(key, { party: key === '__none__' ? null : key, totalOut: 0, totalIn: 0 })
+      }
+      const g = byParty.get(key)
+      g.totalOut += e.debit || 0
+      g.totalIn += e.credit || 0
+    })
+    return [...byParty.entries()].map(([k, g]) => ({
+      ...g,
+      net: g.totalIn - g.totalOut,
+    })).sort((a, b) => a.net - b.net) // Most pending first
+  }
 
   const goPrev = () => {
     if (period === 'weekly') {
@@ -195,15 +212,15 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
       >
         <div>
           <div style={{ fontSize: '0.75rem', opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.totalIncome}</div>
-          <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>₹{formatNum(summary.income)}</div>
+          <div style={{ fontWeight: 700, fontSize: '1.25rem' }}>₹{formatNum(summary.income)}</div>
         </div>
         <div>
           <div style={{ fontSize: '0.75rem', opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.totalExpense}</div>
-          <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>₹{formatNum(summary.expense)}</div>
+          <div style={{ fontWeight: 700, fontSize: '1.25rem' }}>₹{formatNum(summary.expense)}</div>
         </div>
         <div>
           <div style={{ fontSize: '0.75rem', opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.net}</div>
-          <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>₹{formatNum(summary.net)}</div>
+          <div style={{ fontWeight: 700, fontSize: '1.25rem' }}>₹{formatNum(summary.net)}</div>
         </div>
       </div>
 
@@ -240,43 +257,63 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
                 style={{
                   padding: '12px 16px',
                   background: 'var(--slate-100)',
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  color: 'var(--slate-700)',
+                  fontWeight: 500,
+                  fontSize: '0.8rem',
+                  color: 'var(--gray-600)',
                 }}
               >
                 {formatDate(date, lang)}
               </div>
               <ul style={{ listStyle: 'none' }}>
-                {dayEntries.map((e) => (
+                {groupByParty(dayEntries).map((g, idx) => (
                   <li
-                    key={e.id}
+                    key={g.party ?? `general-${idx}`}
                     style={{
-                      padding: '12px 16px',
+                      padding: '14px 16px',
                       borderBottom: '1px solid var(--gray-200)',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      gap: 12,
                     }}
                   >
-                    <div>
-                      <div style={{ fontWeight: 600 }}>
-                        {getAccountLabel(e.account, lang)}
-                        {e.party ? ` · ${e.party}` : ''} · {e.particulars}
-                      </div>
-                      {e.qty != null && e.price != null && (
-                        <div style={{ fontSize: '0.8rem', color: 'var(--gray-600)', marginTop: 2 }}>
-                          {Math.floor(e.qty).toLocaleString('en-IN')} × {(e.unitsPerTray || 1)} × ₹{formatPrice(e.price)} = ₹{formatNum(e.debit || e.credit)}
-                        </div>
-                      )}
+                    <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--slate-900)', marginBottom: 8 }}>
+                      {g.party || (t.noCustomer || 'General')}
                     </div>
-                    <div style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                      {e.debit ? (
-                        <span style={{ color: 'var(--red-600)', fontWeight: 600 }}>− ₹{formatNum(e.debit)}</span>
-                      ) : (
-                        <span style={{ color: 'var(--green-600)', fontWeight: 600 }}>+ ₹{formatNum(e.credit)}</span>
-                      )}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.875rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: 'var(--gray-600)' }}>{t.totalGiven || 'Total Given'}</span>
+                        <span style={{ fontWeight: 600, color: 'var(--red-600)', fontVariantNumeric: 'tabular-nums' }}>
+                          ₹{formatNum(g.totalOut)}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: 'var(--gray-600)' }}>{t.totalCollected || 'Total Collected'}</span>
+                        <span style={{ fontWeight: 600, color: 'var(--green-600)', fontVariantNumeric: 'tabular-nums' }}>
+                          ₹{formatNum(g.totalIn)}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginTop: 6,
+                          paddingTop: 6,
+                          borderTop: '1px solid var(--gray-200)',
+                          fontWeight: 700,
+                          fontSize: '1rem',
+                        }}
+                      >
+                        <span style={{ color: 'var(--slate-700)' }}>{t.net || 'Net'}</span>
+                        {g.net < 0 ? (
+                          <span style={{ color: 'var(--red-600)', fontVariantNumeric: 'tabular-nums' }}>
+                            ₹{formatNum(Math.abs(g.net))} ({t.balancePending})
+                          </span>
+                        ) : g.net > 0 ? (
+                          <span style={{ color: 'var(--green-600)', fontVariantNumeric: 'tabular-nums' }}>
+                            ₹{formatNum(g.net)}
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--gray-500)', fontVariantNumeric: 'tabular-nums' }}>—</span>
+                        )}
+                      </div>
                     </div>
                   </li>
                 ))}

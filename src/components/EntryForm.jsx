@@ -1,12 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useLedger } from '../context/LedgerContext'
-import { getAccountLabel, getAccountIcon, getItemSuggestions } from '../i18n'
-
-const DEFAULT_ACCOUNTS = new Set([
-  'Eggs', 'Vegetables', 'Rice', 'Oil', 'Milk', 'Flour', 'Sugar', 'Tea', 'Salt', 'Spices',
-  'Ginger', 'Garlic', 'Onion', 'Tomato', 'Potato', 'Dal', 'Coconut', 'Lemon',
-  'Groceries', 'Fruits', 'Meat', 'Fish', 'Snacks', 'Cash', 'Sales', 'Rent', 'Other',
-])
+import { getItemSuggestions, getAccountIcon, getAccountLabel } from '../i18n'
 
 function formatNum(n) {
   return Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -39,12 +33,14 @@ function Field({ label, hint, title, children }) {
   )
 }
 
-export default function EntryForm({ t, onSave, onClose, initialAccount, lang = 'en' }) {
-  const { accounts, entries, addAccount, deleteAccount } = useLedger()
-  const longPressRef = useRef(null)
-  const today = new Date().toISOString().slice(0, 10)
+export default function EntryForm({ t, onSave, onClose, initialAccount, lang = 'en', stayOpenAfterSave = false }) {
+  const { accounts, entries } = useLedger()
   const [account, setAccount] = useState(initialAccount || '')
-  const [date, setDate] = useState(today)
+  const getTodayStr = () => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
+  const [date, setDate] = useState(getTodayStr)
   const [particulars, setParticulars] = useState('')
   const [party, setParty] = useState('')
   const [qty, setQty] = useState('')
@@ -53,42 +49,20 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
   const [amount, setAmount] = useState('')
   const [type, setType] = useState('debit')
   const [showMore, setShowMore] = useState(false)
-  const [showNewItemInput, setShowNewItemInput] = useState(false)
-  const [newItemName, setNewItemName] = useState('')
-  const newItemInputRef = useRef(null)
+  const amountInputRef = useRef(null)
 
+  const isQuickMode = !!initialAccount
+  const today = useMemo(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }, [])
+
+  // Auto-focus amount (number pad) as soon as form opens
   useEffect(() => {
-    if (showNewItemInput) newItemInputRef.current?.focus()
-  }, [showNewItemInput])
+    const timer = setTimeout(() => amountInputRef.current?.focus(), 200)
+    return () => clearTimeout(timer)
+  }, [])
 
-  const isCustomAccount = (a) => !DEFAULT_ACCOUNTS.has(a)
-  const itemSuggestions = getItemSuggestions(newItemName, lang)
-
-  const handleRemoveItem = (name) => {
-    const msg = (t.removeItemConfirm || 'Remove "{name}" and all its entries?').replace('{name}', name)
-    if (window.confirm(msg)) {
-      deleteAccount(name)
-      if (account === name) setAccount('')
-    }
-  }
-
-  const handleAccountTouchStart = (a) => {
-    if (!isCustomAccount(a)) return
-    longPressRef.current = setTimeout(() => handleRemoveItem(a), 600)
-  }
-
-  const handleAccountTouchEnd = () => {
-    if (longPressRef.current) {
-      clearTimeout(longPressRef.current)
-      longPressRef.current = null
-    }
-  }
-
-  const handleAccountContextMenu = (e, a) => {
-    if (!isCustomAccount(a)) return
-    e.preventDefault()
-    handleRemoveItem(a)
-  }
   const unitsMult = (() => {
     const v = String(unitsPerQty || '').trim()
     const n = Number(v)
@@ -99,40 +73,43 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
     ? totalUnits * Number(price)
     : null
 
-  const handleAddItem = () => {
-    setShowNewItemInput(true)
-  }
-
-  const handleSubmitNewItem = (e) => {
-    e?.preventDefault()
-    const name = newItemName.trim()
-    if (name) {
-      const added = addAccount(name)
-      if (added) {
-        setAccount(added)
-        setNewItemName('')
-        setShowNewItemInput(false)
-      }
-    } else {
-      setShowNewItemInput(false)
+  // Recently used customers first (most recent at top)
+  const partySuggestions = useMemo(() => {
+    const withLastUsed = entries
+      .filter((e) => e.party)
+      .map((e) => ({ party: e.party, sortKey: `${e.date || ''}_${e.id || ''}` }))
+    const byParty = new Map()
+    for (const { party, sortKey } of withLastUsed) {
+      const existing = byParty.get(party)
+      if (!existing || sortKey > (existing.sortKey || '')) byParty.set(party, { party, sortKey })
     }
-  }
+    return [...byParty.values()].sort((a, b) => (b.sortKey || '').localeCompare(a.sortKey || '')).map((x) => x.party)
+  }, [entries])
 
-  const handleSelectSuggestion = (key) => {
-    addAccount(key)
-    setAccount(key)
-    setNewItemName('')
-    setShowNewItemInput(false)
-  }
-
-  const partySuggestions = [...new Set(entries.map((e) => e.party).filter(Boolean))].sort()
+  // Item suggestions: muttai→Eggs, arisi→Rice, etc. + custom accounts
+  const itemSuggestions = useMemo(() => {
+    const q = (account || '').trim().toLowerCase()
+    if (!q) return []
+    const fromI18n = getItemSuggestions(account, lang, 10)
+    const seen = new Set(fromI18n.map((s) => s.key.toLowerCase()))
+    const fromAccounts = accounts.filter(
+      (a) => (a || '').toLowerCase().includes(q) && !seen.has((a || '').toLowerCase())
+    )
+    for (const a of fromAccounts) {
+      seen.add((a || '').toLowerCase())
+    }
+    return [
+      ...fromI18n,
+      ...fromAccounts.map((a) => ({ key: a, label: getAccountLabel(a, lang) || a })),
+    ].slice(0, 8)
+  }, [account, lang, accounts])
 
   const handleSubmit = (e) => {
     e.preventDefault()
     const acc = (account || '').trim() || 'Other'
     const amt = computedAmount ?? (amount ? Number(amount.replace(/,/g, '')) : 0)
     if (!amt || amt <= 0) return
-    onSave({
+    const payload = {
       account: acc,
       date,
       particulars: particulars.trim() || '—',
@@ -142,7 +119,16 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
       price: price !== '' ? price : null,
       amount: amt,
       type: type === 'credit' ? 'credit' : 'debit',
-    })
+    }
+    onSave(payload, { stayOpen: stayOpenAfterSave })
+    if (stayOpenAfterSave) {
+      setAmount('')
+      setParticulars('')
+      setQty('')
+      setPrice('')
+      setUnitsPerQty('')
+      setTimeout(() => amountInputRef.current?.focus(), 50)
+    }
   }
 
   return (
@@ -195,213 +181,108 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
           {t.addEntry}
         </h2>
         <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: 24 }}>
-          {t.formIntro}
+          {stayOpenAfterSave ? (t.formIntroQuick || 'Customer, amount. Date auto. Stays open for next.') : t.formIntro}
         </p>
         <form onSubmit={handleSubmit}>
-          {/* 1. Category - Tap to select */}
+          {/* 1. Customer – recently used first */}
           <Field
-            label={t.accountFormLabel || 'For what? (Tap to select)'}
-            hint={t.accountFormHint}
-            title={t.accountFormHint}
+            label={t.partyLabel || 'Customer / Restaurant'}
+            hint={type === 'debit' ? (t.partyHintDebit || 'If sold on credit') : (t.partyHintCredit || 'If collecting')}
+            title={type === 'debit' ? t.partyHintDebit : t.partyHintCredit}
           >
-            <div
-              className="entry-form-account-grid"
+            <input
+              type="text"
+              value={party}
+              onChange={(e) => setParty(e.target.value)}
+              placeholder={lang === 'ta' ? 'எ.கா: ஹோட்டல், ரெஸ்டாரன்ட்' : 'e.g. Restaurant, Hotel'}
+              list="party-list"
+              autoComplete="off"
+              autoFocus={false}
               style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: 8,
+                padding: '14px 16px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--gray-200)',
+                width: '100%',
+                fontSize: '0.9375rem',
               }}
-            >
-              {accounts.map((a) => (
-                <div
-                  key={a}
-                  style={{
-                    position: 'relative',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                  }}
-                >
-                  <button
-                    data-testid={`account-${a}`}
-                    type="button"
-                    onClick={() => setAccount(a)}
-                    onTouchStart={() => handleAccountTouchStart(a)}
-                    onTouchEnd={handleAccountTouchEnd}
-                    onTouchCancel={handleAccountTouchEnd}
-                    onContextMenu={(e) => handleAccountContextMenu(e, a)}
-                    title={isCustomAccount(a) ? (t.removeItem || 'Remove item') : undefined}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 4,
-                      padding: '10px 6px',
-                      borderRadius: 'var(--radius-sm)',
-                      background: account === a ? '#2563eb' : 'var(--gray-100)',
-                      color: account === a ? 'var(--white)' : 'var(--slate-800)',
-                      border: account === a ? 'none' : '1px solid var(--gray-200)',
-                      width: '100%',
-                    }}
-                  >
-                    <span style={{ fontSize: '1.25rem' }}>{getAccountIcon(a)}</span>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 600 }}>{getAccountLabel(a, lang)}</span>
-                  </button>
-                  {isCustomAccount(a) && (
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); handleRemoveItem(a); }}
-                      title={t.removeItem}
-                      aria-label={t.removeItem}
-                      style={{
-                        position: 'absolute',
-                        top: 4,
-                        right: 4,
-                        width: 28,
-                        height: 28,
-                        minWidth: 28,
-                        minHeight: 28,
-                        borderRadius: '50%',
-                        background: 'var(--red-600)',
-                        color: 'white',
-                        border: '2px solid white',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                        fontSize: '0.85rem',
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: 0,
-                        lineHeight: 1,
-                        cursor: 'pointer',
-                        zIndex: 2,
-                      }}
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={handleAddItem}
-                title={t.addItemHint}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 2,
-                  padding: 10,
-                  borderRadius: 'var(--radius-sm)',
-                  background: 'var(--white)',
-                  border: '2px dashed var(--gray-300)',
-                }}
-              >
-                <span style={{ fontSize: '1.1rem' }}>➕</span>
-                <span style={{ fontSize: '0.6rem', fontWeight: 600 }}>{lang === 'ta' ? 'புதியது' : 'New'}</span>
-              </button>
-            </div>
-            {showNewItemInput && (
-              <div style={{ marginTop: 10, position: 'relative' }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <input
-                    ref={newItemInputRef}
-                    type="text"
-                    value={newItemName}
-                    onChange={(e) => setNewItemName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSubmitNewItem(e)
-                      if (e.key === 'Escape') { setShowNewItemInput(false); setNewItemName(''); }
-                    }}
-                    placeholder={t.enterNewItemName}
-                    style={{
-                      flex: 1,
-                      padding: '10px 14px',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '2px solid var(--gray-200)',
-                      fontSize: '0.9375rem',
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSubmitNewItem}
-                    style={{
-                      padding: '10px 16px',
-                      borderRadius: 'var(--radius-sm)',
-                      background: '#2563eb',
-                      color: 'var(--white)',
-                      fontWeight: 600,
-                      fontSize: '0.875rem',
-                      border: 'none',
-                    }}
-                  >
-                    {t.addShort || 'Add'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setShowNewItemInput(false); setNewItemName(''); }}
-                    title={t.cancel}
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'var(--gray-200)',
-                      color: 'var(--slate-700)',
-                      border: 'none',
-                      fontSize: '1rem',
-                    }}
-                    aria-label={t.cancel}
-                  >
-                    ✕
-                  </button>
-                </div>
-                {itemSuggestions.length > 0 && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      right: 0,
-                      marginTop: 4,
-                      background: 'var(--white)',
-                      border: '1px solid var(--gray-200)',
-                      borderRadius: 'var(--radius-sm)',
-                      boxShadow: 'var(--shadow-md)',
-                      maxHeight: 200,
-                      overflowY: 'auto',
-                      zIndex: 10,
-                    }}
-                  >
-                    {itemSuggestions.map(({ key, label }) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => handleSelectSuggestion(key)}
-                        style={{
-                          width: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 8,
-                          padding: '10px 14px',
-                          background: 'transparent',
-                          border: 'none',
-                          textAlign: 'left',
-                          fontSize: '0.9375rem',
-                          cursor: 'pointer',
-                          color: 'var(--slate-800)',
-                        }}
-                      >
-                        <span style={{ fontSize: '1.1rem' }}>{getAccountIcon(key)}</span>
-                        <span>{label}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+            />
+            {partySuggestions.length > 0 && (
+              <datalist id="party-list">
+                {partySuggestions.map((p) => (
+                  <option key={p} value={p} />
+                ))}
+              </datalist>
             )}
           </Field>
 
-          {/* 2. Money Out / Money In - Big icon-first buttons */}
+          {/* 2. Item – type muttai, arisi, etc.; suggestions appear, tap to select */}
+          <Field
+            label={t.accountFormLabel || 'Item (optional)'}
+            hint={t.accountFormHint || 'Type e.g. muttai, arisi – suggestions appear'}
+            title={t.accountFormHint}
+          >
+            <div style={{ position: 'relative' }}>
+              <input
+                data-testid="entry-account"
+                type="text"
+                value={account}
+                onChange={(e) => setAccount(e.target.value)}
+                placeholder={lang === 'ta' ? 'எ.கா: முட்டை, அரிசி, பிற' : 'e.g. muttai, arisi, Other'}
+                autoComplete="off"
+                style={{
+                  padding: '14px 16px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--gray-200)',
+                  width: '100%',
+                  fontSize: '0.9375rem',
+                }}
+              />
+              {itemSuggestions.length > 0 && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    marginTop: 4,
+                    background: 'var(--white)',
+                    border: '1px solid var(--gray-200)',
+                    borderRadius: 'var(--radius-sm)',
+                    boxShadow: 'var(--shadow-md)',
+                    maxHeight: 220,
+                    overflowY: 'auto',
+                    zIndex: 10,
+                  }}
+                >
+                  {itemSuggestions.map(({ key, label }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setAccount(key)}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        padding: '12px 14px',
+                        background: 'transparent',
+                        border: 'none',
+                        textAlign: 'left',
+                        fontSize: '0.9375rem',
+                        cursor: 'pointer',
+                        color: 'var(--slate-800)',
+                      }}
+                    >
+                      <span style={{ fontSize: '1.1rem' }}>{getAccountIcon(key)}</span>
+                      <span>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Field>
+
+          {/* 3. Money Out / Money In */}
           <Field label={t.type} hint={type === 'debit' ? t.debitHint : t.creditHint} title={t.debitHint}>
             <div
               style={{
@@ -460,39 +341,10 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
             </div>
           </Field>
 
-          {/* 2b. Customer/Restaurant - for credit tracking */}
-          <Field
-            label={t.partyLabel || 'Customer / Restaurant'}
-            hint={type === 'debit' ? (t.partyHintDebit || 'If sold on credit, enter customer name') : (t.partyHintCredit || 'If collecting, enter customer name')}
-            title={type === 'debit' ? t.partyHintDebit : t.partyHintCredit}
-          >
-            <input
-              type="text"
-              value={party}
-              onChange={(e) => setParty(e.target.value)}
-              placeholder={lang === 'ta' ? 'எ.கா: ஹோட்டல், ரெஸ்டாரன்ட்' : 'e.g. Restaurant, Hotel'}
-              list="party-list"
-              autoComplete="off"
-              style={{
-                padding: '12px 16px',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--gray-200)',
-                width: '100%',
-                fontSize: '0.9375rem',
-              }}
-            />
-            {partySuggestions.length > 0 && (
-              <datalist id="party-list">
-                {partySuggestions.map((p) => (
-                  <option key={p} value={p} />
-                ))}
-              </datalist>
-            )}
-          </Field>
-
-          {/* 3. Amount - Big, prominent input */}
+          {/* 4. Amount – big, number pad ready */}
           <Field label={t.amount} hint={t.amountHint} title={t.amountHint}>
             <input
+              ref={amountInputRef}
               data-testid="entry-amount"
               type="text"
               inputMode="decimal"
@@ -502,15 +354,37 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
               disabled={computedAmount != null}
               placeholder="0"
               style={{
-                fontSize: '1.25rem',
-                fontWeight: 600,
-                padding: '16px 20px',
+                fontSize: '1.5rem',
+                fontWeight: 700,
+                padding: '18px 20px',
                 borderRadius: 'var(--radius-md)',
                 border: '2px solid var(--gray-200)',
                 width: '100%',
                 textAlign: 'center',
               }}
             />
+            {computedAmount == null && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                {[100, 500, 1000, 2000].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setAmount(String(n))}
+                    style={{
+                      padding: '10px 16px',
+                      borderRadius: 8,
+                      fontWeight: 600,
+                      fontSize: '0.9rem',
+                      background: 'var(--gray-100)',
+                      border: '1px solid var(--gray-200)',
+                      color: 'var(--slate-800)',
+                    }}
+                  >
+                    ₹{n.toLocaleString('en-IN')}
+                  </button>
+                ))}
+              </div>
+            )}
           </Field>
           {computedAmount != null && (
             <p style={{ fontSize: '0.85rem', color: 'var(--teal-700)', marginBottom: 12, fontWeight: 600 }}>
@@ -518,35 +392,41 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
             </p>
           )}
 
-          {/* 4. Date - with Today quick button */}
-          <Field label={t.date} hint={t.dateHint} title={t.dateHint}>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <button
-                type="button"
-                onClick={() => setDate(today)}
-                style={{
-                  padding: '12px 16px',
-                  borderRadius: 'var(--radius-sm)',
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  background: date === today ? '#2563eb' : 'var(--gray-100)',
-                  color: date === today ? 'var(--white)' : 'var(--slate-700)',
-                  border: date === today ? 'none' : '1px solid var(--gray-200)',
-                }}
-              >
-                {t.today || 'Today'}
-              </button>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                title={t.dateHint}
-                style={{ flex: 1, padding: '12px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--gray-200)' }}
-              />
-            </div>
-          </Field>
+          {/* 5. More options – Date, particulars, qty/price */}
+          {showMore && (
+            <>
 
-          {/* 5. Collapsible "More" - particulars + qty/units/price */}
+          {/* Date - auto today, in More */}
+          {showMore && (
+            <Field label={t.date} hint={t.dateHint} title={t.dateHint}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setDate(today)}
+                  style={{
+                    padding: '12px 16px',
+                    borderRadius: 'var(--radius-sm)',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    background: date === today ? '#2563eb' : 'var(--gray-100)',
+                    color: date === today ? 'var(--white)' : 'var(--slate-700)',
+                    border: date === today ? 'none' : '1px solid var(--gray-200)',
+                  }}
+                >
+                  {t.today || 'Today'}
+                </button>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  title={t.dateHint}
+                  style={{ flex: 1, padding: '12px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--gray-200)' }}
+                />
+              </div>
+            </Field>
+          )}
+
+          {/* Particulars + qty/units/price */}
           {showMore && (
             <>
               <Field label={t.particulars} hint={t.particularsHint} title={t.particularsHint}>
@@ -596,6 +476,9 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
               </Field>
             </>
           )}
+            </>
+          )}
+
           <button
             type="button"
             onClick={() => setShowMore(!showMore)}
@@ -626,7 +509,7 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
                 color: 'var(--text-secondary)',
               }}
             >
-              {t.cancel}
+              {stayOpenAfterSave ? (t.done || 'Done') : t.cancel}
             </button>
             <button
               data-testid="entry-save"

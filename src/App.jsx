@@ -38,15 +38,15 @@ function App() {
     setRefreshTrigger((k) => k + 1)
   }, [refresh])
 
-  const handleSaveEntry = (data) => {
+  const handleSaveEntry = (data, opts = {}) => {
     addEntry(data)
     const acc = (data.account || '').trim() || 'Other'
     setAccountToSelect(acc)
-    // Don't call refresh() here - it can fetch stale data before save completes.
-    // addEntry already updates state optimistically.
     setRefreshTrigger((k) => k + 1)
-    setFormOpen(false)
-    setActiveTab(formOpenedFrom === 'ledger' ? 'ledger' : 'home')
+    if (!opts.stayOpen) {
+      setFormOpen(false)
+      setActiveTab('ledger')
+    }
   }
 
   useEffect(() => {
@@ -126,7 +126,6 @@ function App() {
             t={t}
             lang={lang}
             onViewReport={handleViewReport}
-            onSelectAccount={handleSelectAccount}
             onAddEntry={() => {
               setFormOpenedFrom('home')
               setFormOpen(true)
