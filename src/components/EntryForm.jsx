@@ -395,10 +395,8 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
           {/* 5. More options – Date, particulars, qty/price */}
           {showMore && (
             <>
-
-          {/* Date - auto today, in More */}
-          {showMore && (
-            <Field label={t.date} hint={t.dateHint} title={t.dateHint}>
+              {/* Date - auto today, in More */}
+              <Field label={t.date} hint={t.dateHint} title={t.dateHint}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button
                   type="button"
@@ -424,11 +422,8 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
                 />
               </div>
             </Field>
-          )}
 
-          {/* Particulars + qty/units/price */}
-          {showMore && (
-            <>
+              {/* Particulars + qty/units/price */}
               <Field label={t.particulars} hint={t.particularsHint} title={t.particularsHint}>
                 <input
                   type="text"
@@ -474,8 +469,6 @@ export default function EntryForm({ t, onSave, onClose, initialAccount, lang = '
                   style={{ padding: '12px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--gray-200)', width: '100%' }}
                 />
               </Field>
-            </>
-          )}
             </>
           )}
 

@@ -3,10 +3,9 @@ Ledger routes: GET /api/ledger, PUT /api/ledger.
 """
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from psycopg2.extras import Json
 
 from server.auth import get_user_id
-from server.db import get_cursor
+from server.db import get_cursor, _json_adapt, USE_SQLITE
 
 router = APIRouter(prefix="/api", tags=["Ledger"])
 
@@ -28,9 +27,15 @@ def get_ledger(user_id: str = Depends(get_user_id)):
     if not row:
         return {"accounts": [], "entries": []}
 
+    accounts = row["accounts"]
+    entries = row["entries"]
+    if USE_SQLITE and isinstance(accounts, str):
+        import json
+        accounts = json.loads(accounts) if accounts else []
+        entries = json.loads(entries) if entries else []
     return {
-        "accounts": row["accounts"] or [],
-        "entries": row["entries"] or [],
+        "accounts": accounts or [],
+        "entries": entries or [],
     }
 
 
@@ -44,8 +49,8 @@ def put_ledger(body: LedgerBody, user_id: str = Depends(get_user_id)):
             ON CONFLICT (user_id) DO UPDATE SET
                 accounts = EXCLUDED.accounts,
                 entries = EXCLUDED.entries,
-                updated_at = now()
+                updated_at = """ + ("datetime('now')" if USE_SQLITE else "now()") + """
             """,
-            (user_id, Json(body.accounts), Json(body.entries)),
+            (user_id, _json_adapt(body.accounts), _json_adapt(body.entries)),
         )
     return {"ok": True}

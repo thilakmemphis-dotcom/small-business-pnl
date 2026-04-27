@@ -198,6 +198,7 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
         </button>
       </div>
 
+      {/* Summary – icon-first, red=out green=in */}
       <div
         style={{
           display: 'grid',
@@ -211,20 +212,30 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
         }}
       >
         <div>
-          <div style={{ fontSize: '0.75rem', opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.totalIncome}</div>
-          <div style={{ fontWeight: 700, fontSize: '1.25rem' }}>₹{formatNum(summary.income)}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <span style={{ fontSize: '1rem' }} aria-hidden>💰</span>
+            {t.totalIncome}
+          </div>
+          <div style={{ fontWeight: 700, fontSize: '1.35rem', color: 'var(--green-200)' }}>₹{formatNum(summary.income)}</div>
         </div>
         <div>
-          <div style={{ fontSize: '0.75rem', opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.totalExpense}</div>
-          <div style={{ fontWeight: 700, fontSize: '1.25rem' }}>₹{formatNum(summary.expense)}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <span style={{ fontSize: '1rem' }} aria-hidden>💸</span>
+            {t.totalExpense}
+          </div>
+          <div style={{ fontWeight: 700, fontSize: '1.35rem', color: 'var(--red-200)' }}>₹{formatNum(summary.expense)}</div>
         </div>
         <div>
-          <div style={{ fontSize: '0.75rem', opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.net}</div>
-          <div style={{ fontWeight: 700, fontSize: '1.25rem' }}>₹{formatNum(summary.net)}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <span style={{ fontSize: '1rem' }} aria-hidden>📊</span>
+            {t.net}
+          </div>
+          <div style={{ fontWeight: 700, fontSize: '1.35rem', color: summary.net >= 0 ? 'var(--green-200)' : 'var(--red-200)' }}>₹{formatNum(summary.net)}</div>
         </div>
       </div>
 
-      <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, marginBottom: 14, color: 'var(--slate-900)' }}>
+      <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9375rem', fontWeight: 600, marginBottom: 14, color: 'var(--slate-900)' }}>
+        <span style={{ fontSize: '1.1rem' }} aria-hidden>📋</span>
         {period === 'weekly' ? t.weeklyReport : t.monthlyReport}
       </h3>
       {entriesByDate.length === 0 ? (
@@ -276,16 +287,22 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
                     <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--slate-900)', marginBottom: 8 }}>
                       {g.party || (t.noCustomer || 'General')}
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.875rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.875rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: 'var(--gray-600)' }}>{t.totalGiven || 'Total Given'}</span>
-                        <span style={{ fontWeight: 600, color: 'var(--red-600)', fontVariantNumeric: 'tabular-nums' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--gray-600)' }}>
+                          <span style={{ fontSize: '1rem' }} aria-hidden>💸</span>
+                          {t.totalGiven || 'Total Given'}
+                        </span>
+                        <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--red-600)', fontVariantNumeric: 'tabular-nums' }}>
                           ₹{formatNum(g.totalOut)}
                         </span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: 'var(--gray-600)' }}>{t.totalCollected || 'Total Collected'}</span>
-                        <span style={{ fontWeight: 600, color: 'var(--green-600)', fontVariantNumeric: 'tabular-nums' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--gray-600)' }}>
+                          <span style={{ fontSize: '1rem' }} aria-hidden>💰</span>
+                          {t.totalCollected || 'Total Collected'}
+                        </span>
+                        <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--green-600)', fontVariantNumeric: 'tabular-nums' }}>
                           ₹{formatNum(g.totalIn)}
                         </span>
                       </div>
@@ -298,10 +315,13 @@ export default function ReportsView({ t, refreshTrigger, lang = 'en' }) {
                           paddingTop: 6,
                           borderTop: '1px solid var(--gray-200)',
                           fontWeight: 700,
-                          fontSize: '1rem',
+                          fontSize: '1.1rem',
                         }}
                       >
-                        <span style={{ color: 'var(--slate-700)' }}>{t.net || 'Net'}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--slate-700)' }}>
+                          <span style={{ fontSize: '1rem' }} aria-hidden>📊</span>
+                          {t.net || 'Net'}
+                        </span>
                         {g.net < 0 ? (
                           <span style={{ color: 'var(--red-600)', fontVariantNumeric: 'tabular-nums' }}>
                             ₹{formatNum(Math.abs(g.net))} ({t.balancePending})

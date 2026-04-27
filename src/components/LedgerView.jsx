@@ -367,6 +367,7 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 4 }}>
+                      <span style={{ fontSize: '0.95rem' }} aria-hidden>📅</span>
                       {t.date}
                       <FilterDropdown col="date" />
                     </div>
@@ -382,7 +383,8 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 4 }}>
-                      {t.particulars}
+                      <span style={{ fontSize: '0.95rem' }} aria-hidden>📦</span>
+                      {t.itemLabel || t.particulars || 'Item'}
                       <FilterDropdown col="particulars" />
                     </div>
                   </th>
@@ -398,6 +400,7 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                     title={t.debitHint}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                      <span style={{ fontSize: '0.95rem', color: 'var(--red-600)' }} aria-hidden>↓</span>
                       <span>{t.outShort || t.debit}</span>
                       <FilterDropdown col="debit" />
                     </div>
@@ -414,6 +417,7 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                     title={t.creditHint}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                      <span style={{ fontSize: '0.95rem', color: 'var(--green-600)' }} aria-hidden>↑</span>
                       <span>{t.inShort || t.credit}</span>
                       <FilterDropdown col="credit" />
                     </div>
@@ -429,6 +433,7 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                      <span style={{ fontSize: '0.95rem' }} aria-hidden>💰</span>
                       {t.balance}
                       <FilterDropdown col="balance" />
                     </div>
@@ -534,6 +539,7 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
             </table>
           </div>
 
+          {/* Ledger summary – icon-first, numbers prominent */}
           <div
             style={{
               display: 'grid',
@@ -548,16 +554,25 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
             }}
           >
             <div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--gray-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.totalIncome}</div>
-              <div style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--green-600)' }}>₹{formatNum(summary.income)}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: 'var(--gray-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <span style={{ fontSize: '1rem' }} aria-hidden>💰</span>
+                {t.totalIncome}
+              </div>
+              <div style={{ fontWeight: 700, fontSize: '1.3rem', color: 'var(--green-600)', fontVariantNumeric: 'tabular-nums' }}>₹{formatNum(summary.income)}</div>
             </div>
             <div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--gray-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.totalExpense}</div>
-              <div style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--red-600)' }}>₹{formatNum(summary.expense)}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: 'var(--gray-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <span style={{ fontSize: '1rem' }} aria-hidden>💸</span>
+                {t.totalExpense}
+              </div>
+              <div style={{ fontWeight: 700, fontSize: '1.3rem', color: 'var(--red-600)', fontVariantNumeric: 'tabular-nums' }}>₹{formatNum(summary.expense)}</div>
             </div>
             <div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--gray-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.net}</div>
-              <div style={{ fontWeight: 700, fontSize: '1.2rem', color: summary.net >= 0 ? 'var(--green-600)' : 'var(--red-600)' }}>₹{formatNum(summary.net)}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', color: 'var(--gray-600)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <span style={{ fontSize: '1rem' }} aria-hidden>📊</span>
+                {t.net}
+              </div>
+              <div style={{ fontWeight: 700, fontSize: '1.3rem', color: summary.net >= 0 ? 'var(--green-600)' : 'var(--red-600)', fontVariantNumeric: 'tabular-nums' }}>₹{formatNum(summary.net)}</div>
             </div>
           </div>
         </>
@@ -574,9 +589,15 @@ export default function LedgerView({ t, onAddEntry, onRefresh, refreshTrigger, l
           borderRadius: 'var(--radius-md)',
           fontWeight: 600,
           fontSize: '0.9375rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 10,
         }}
       >
-        + {t.addEntry}
+        <span style={{ fontSize: '1.4rem' }} aria-hidden>➕</span>
+        <span style={{ fontSize: '1.2rem' }} aria-hidden>💵</span>
+        {t.addEntry}
       </button>
     </section>
   )

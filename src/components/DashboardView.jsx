@@ -35,20 +35,26 @@ export default function DashboardView({
     [pendingList]
   )
 
-  const today = useMemo(() => {
-    const d = new Date()
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-  }, [])
   const { givenToday: todayExpense, receivedToday: todayIncome } = useMemo(() => {
+    const d = new Date()
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     let expense = 0
     let income = 0
-    entries.forEach((e) => {
-      if (e.date !== today) return
-      expense += e.debit || 0
-      income += e.credit || 0
+    ;(entries || []).forEach((e) => {
+      const raw = (e.date || '').toString().trim()
+      let entryDate = raw.slice(0, 10)
+      if (!entryDate) return
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(entryDate)) {
+        const parsed = new Date(raw)
+        if (Number.isNaN(parsed.getTime())) return
+        entryDate = `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`
+      }
+      if (entryDate !== todayStr) return
+      expense += Number(e.debit ?? e.Debit) || 0
+      income += Number(e.credit ?? e.Credit) || 0
     })
     return { givenToday: expense, receivedToday: income }
-  }, [entries, today])
+  }, [entries, refreshTrigger])
 
   return (
     <section style={{ paddingBottom: 24 }}>
@@ -63,35 +69,41 @@ export default function DashboardView({
           border: '1px solid var(--gray-200)',
         }}
       >
-        {/* 1. Today's Status (Given/Received) */}
+        {/* 1. Today's Status – icon-first, red=out green=in */}
         <div style={{ marginBottom: 20, paddingBottom: 16, borderBottom: '2px dashed var(--gray-200)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <span style={{ fontSize: '1rem' }} aria-hidden>📅</span>
-            <span style={{ fontSize: '0.8125rem', color: 'var(--gray-600)', fontWeight: 600 }}>
+            <span style={{ fontSize: '1.25rem' }} aria-hidden>📅</span>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--gray-600)', fontWeight: 600 }} title={new Date().toISOString().slice(0, 10)}>
               {t.today || 'Today'}
             </span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.875rem', color: 'var(--slate-700)' }}>{t.givenToday || 'Given'}</span>
-              <span style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--slate-700)', fontVariantNumeric: 'tabular-nums' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.875rem', color: 'var(--gray-600)' }}>
+                <span style={{ fontSize: '1.25rem' }} aria-hidden>💸</span>
+                {t.givenToday || 'Given'}
+              </span>
+              <span style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--red-600)', fontVariantNumeric: 'tabular-nums' }}>
                 ₹{formatNum(todayExpense)}
               </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.875rem', color: 'var(--slate-700)' }}>{t.receivedToday || 'Received'}</span>
-              <span style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--green-600)', fontVariantNumeric: 'tabular-nums' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.875rem', color: 'var(--gray-600)' }}>
+                <span style={{ fontSize: '1.25rem' }} aria-hidden>💰</span>
+                {t.receivedToday || 'Received'}
+              </span>
+              <span style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--green-600)', fontVariantNumeric: 'tabular-nums' }}>
                 ₹{formatNum(todayIncome)}
               </span>
             </div>
           </div>
         </div>
 
-        {/* 2. Outstanding Customers */}
+        {/* 2. Outstanding Customers – icon-first */}
         {(pendingList.length > 0) && (
           <div style={{ marginBottom: 20, paddingBottom: 16, borderBottom: '2px dashed var(--gray-200)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <span style={{ fontSize: '1rem' }} aria-hidden>👥</span>
+              <span style={{ fontSize: '1.25rem' }} aria-hidden>👥</span>
               <span style={{ fontSize: '0.8125rem', color: 'var(--gray-600)', fontWeight: 600 }}>
                 {t.outstandingCustomers || t.pendingCollections || 'Outstanding Customers'}
               </span>
@@ -121,10 +133,10 @@ export default function DashboardView({
           </div>
         )}
 
-        {/* 3. Total Outstanding */}
+        {/* 3. Total Outstanding – icon + red = pending/debt */}
         <div style={{ marginBottom: 20, paddingBottom: 16, borderBottom: '2px dashed var(--gray-200)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: '1rem' }} aria-hidden>💰</span>
+            <span style={{ fontSize: '1.25rem' }} aria-hidden>💰</span>
             <span style={{ fontSize: '0.8125rem', color: 'var(--gray-600)', fontWeight: 600 }}>
               {t.totalOutstanding || 'Total Outstanding'}
             </span>
@@ -134,7 +146,7 @@ export default function DashboardView({
           </div>
         </div>
 
-        {/* Add Entry + View Report */}
+        {/* Add Entry + View Report – icon-first */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <button
             type="button"
@@ -142,15 +154,21 @@ export default function DashboardView({
             title={t.addEntry}
             style={{
               width: '100%',
-              padding: 14,
+              padding: 16,
               background: 'var(--slate-900)',
               color: 'var(--white)',
               borderRadius: 'var(--radius-md)',
               fontWeight: 600,
-              fontSize: '0.9375rem',
+              fontSize: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 10,
             }}
           >
-            + {t.addEntry}
+            <span style={{ fontSize: '1.5rem' }} aria-hidden>➕</span>
+            <span style={{ fontSize: '1.25rem' }} aria-hidden>💵</span>
+            {t.addEntry}
           </button>
           <button
             type="button"
@@ -158,14 +176,19 @@ export default function DashboardView({
             title={t.viewReportHint}
             style={{
               width: '100%',
-              padding: 12,
+              padding: 14,
               background: '#2563eb',
               color: 'var(--white)',
               borderRadius: 'var(--radius-sm)',
               fontWeight: 600,
-              fontSize: '0.875rem',
+              fontSize: '0.9rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
             }}
           >
+            <span style={{ fontSize: '1.25rem' }} aria-hidden>📊</span>
             {t.viewReport || 'VIEW REPORT'} ›
           </button>
         </div>

@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
-from server.db import get_cursor
+from server.db import get_cursor, _uuid, USE_SQLITE
 
 APP_URL = os.getenv("APP_URL", "http://localhost:5173")
 JWT_SECRET = os.getenv("JWT_SECRET", "ledger-book-secret-change-in-production")
@@ -74,11 +74,19 @@ def signup(body: SignupBody):
             raise HTTPException(status_code=400, detail="Email already registered")
 
         h = bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=10)).decode()
-        cur.execute(
-            "INSERT INTO users (email, password_hash, name) VALUES (%s, %s, %s) RETURNING id, email, name, avatar_url, created_at",
-            (email, h, name),
-        )
-        row = cur.fetchone()
+        if USE_SQLITE:
+            user_id = _uuid()
+            cur.execute(
+                "INSERT INTO users (id, email, password_hash, name) VALUES (%s, %s, %s, %s)",
+                (user_id, email, h, name),
+            )
+            row = {"id": user_id, "email": email, "name": name, "avatar_url": None}
+        else:
+            cur.execute(
+                "INSERT INTO users (email, password_hash, name) VALUES (%s, %s, %s) RETURNING id, email, name, avatar_url, created_at",
+                (email, h, name),
+            )
+            row = cur.fetchone()
         user_id = str(row["id"])
         user = {
             "id": user_id,
@@ -143,9 +151,10 @@ def forgot_password(body: ForgotPasswordBody):
     if not row:
         return {"ok": True, "message": "If an account exists, you will receive a reset link"}
 
-    user_id = row["id"]
+    user_id = str(row["id"])
     token = secrets.token_hex(32)
     expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+    expires_val = expires_at.isoformat() if USE_SQLITE else expires_at
 
     # Check if smtp is configured
     smtp_host = os.getenv("SMTP_HOST")
@@ -159,7 +168,7 @@ def forgot_password(body: ForgotPasswordBody):
             VALUES (%s, %s, %s)
             ON CONFLICT (user_id) DO UPDATE SET token = EXCLUDED.token, expires_at = EXCLUDED.expires_at
             """,
-            (user_id, token, expires_at),
+            (user_id, token, expires_val),
         )
 
     reset_link = f"{APP_URL}/?resetToken={token}"
@@ -219,10 +228,26 @@ def reset_password(body: ResetPasswordBody):
 
     with get_cursor() as cur:
         cur.execute(
-            "SELECT user_id FROM password_reset_tokens WHERE token = %s AND expires_at > now()",
+            "SELECT user_id, expires_at FROM password_reset_tokens WHERE token = %s",
             (token,),
         )
         row = cur.fetchone()
+
+    if row:
+        exp = row.get("expires_at")
+        if exp is not None:
+            now = datetime.now(timezone.utc)
+            try:
+                if isinstance(exp, str):
+                    exp_utc = datetime.fromisoformat(exp.replace("Z", "+00:00"))
+                elif hasattr(exp, "tzinfo") and exp.tzinfo:
+                    exp_utc = exp
+                else:
+                    exp_utc = exp.replace(tzinfo=timezone.utc) if hasattr(exp, "replace") else now
+                if now > exp_utc:
+                    row = None
+            except Exception:
+                pass  # if unparseable, allow the reset
 
     if not row:
         raise HTTPException(
